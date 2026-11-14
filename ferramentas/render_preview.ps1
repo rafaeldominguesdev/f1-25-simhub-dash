@@ -3,6 +3,20 @@ $ErrorActionPreference = 'Continue'
 $j = [IO.File]::ReadAllText($Djson) | ConvertFrom-Json
 $W = $j.BaseWidth; $H = $j.BaseHeight
 $carDir = Join-Path (Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)) 'carro'
+# Grupos (Layer) viram a lista dos filhos; quem nao tem formula de "Visible" herda a do grupo.
+function Flat($list) {
+  foreach ($it in $list) {
+    if ($it.Childrens) {
+      foreach ($ch in $it.Childrens) {
+        if ($it.Bindings -and $it.Bindings.Visible) {
+          if (-not $ch.Bindings) { $ch | Add-Member -NotePropertyName Bindings -NotePropertyValue ([pscustomobject]@{}) -Force }
+          if (-not $ch.Bindings.Visible) { $ch.Bindings | Add-Member -NotePropertyName Visible -NotePropertyValue $it.Bindings.Visible -Force }
+        }
+        $ch
+      }
+    } else { $it }
+  }
+}
 New-Item -ItemType Directory -Force $OutDir | Out-Null
 
 function css($c) { if (-not $c) { return 'transparent' }; if ($c -notmatch '^#[0-9A-Fa-f]{8}$') { return $c }
@@ -127,7 +141,7 @@ foreach ($name in $states.Keys) {
 
   $sb = New-Object Text.StringBuilder
   [void]$sb.Append("<!doctype html><html><head><meta charset='utf-8'></head><body style='margin:0;background:#000'><div style='position:relative;width:${W}px;height:${H}px;overflow:hidden'>")
-  foreach ($i in $j.Screens[[int]$s.scr].Items) {
+  foreach ($i in (Flat $j.Screens[[int]$s.scr].Items)) {
     $o = $ov[$i.Name]; if (-not $o) { $o = @{} }
     if ($o.Hidden) { continue }
     if ($i.'$type' -like '*ImageItem*' -or $i.'$type' -like '*ButtonItem*') {

@@ -99,17 +99,13 @@ function Add-BgAndLeds {
 Txt -Name 'Fundo_Flags' -X 0 -Y 0 -W $W -H $H -Bg '#FF050506' -Bindings ([ordered]@{ BackgroundColor = (B 'BackgroundColor' (JS $bgJs)) })
 
 # ================= LEDS DE RPM (15) =================
+# Formula NCalc (bem mais leve que JavaScript): usa as luzes de troca do proprio jogo.
 $ledColors = @($C.Green,$C.Green,$C.Green,$C.Green,$C.Green,$C.Red,$C.Red,$C.Red,$C.Red,$C.Red,$C.Purple,$C.Purple,$C.Purple,$C.Purple,$C.Purple)
+$ledP = 'isnull([{R}PlayerCarTelemetryData.m_revLightsPercent],0)'
 for ($i = 0; $i -lt 15; $i++) {
-  $js = @'
-var p = $prop('{R}PlayerCarTelemetryData.m_revLightsPercent');
-if (p == null) { var r = $prop('{N}Rpms'), m = $prop('{N}MaxRpm'); p = m ? (r / m - 0.75) / 0.23 * 100 : 0; }
-if (p >= 99) return (Math.floor(Date.now() / 90) % 2 == 0) ? '#FF4FC3F7' : '#FF141418';
-return (p / 100 * 15 > IDX) ? 'COL' : '#FF19191E';
-'@
-  $js = $js.Replace('IDX', "$i").Replace('COL', $ledColors[$i])
+  $nc = "if($ledP >= 99, if(blink('ledshift', 90, true), '#FF4FC3F7', '#FF141418'), if($ledP * 15 / 100 > $i, '$($ledColors[$i])', '#FF19191E'))"
   Txt -Name "LED_$i" -X (212 + $i * 89) -Y 8 -W 84 -H 34 -Bg '#FF19191E' -Border (Border '#00FFFFFF' 0 6) `
-      -Bindings ([ordered]@{ BackgroundColor = (B 'BackgroundColor' (JS $js)) })
+      -Bindings ([ordered]@{ BackgroundColor = (B 'BackgroundColor' (NC $nc)) })
 }
 }
 
@@ -302,26 +298,36 @@ var fs = Math.min(ah * 0.34, pw * 0.88 / (maxLen * 0.72));
 var subFs = Math.min(bh * 0.6, pw * 0.88 / (Math.max(sub.length, 1) * 0.72));
 '@
 function Add-Popup {
+  # Os 5 elementos ficam dentro de um grupo. Sem aviso na tela, o SimHub so avalia 1 formula (a do grupo).
+  $saved = $script:items; $script:items = New-Object System.Collections.ArrayList
   function PB([string]$code) { B ($code.Split(':')[0]) (JS ("$statusJs " + $code.Substring($code.IndexOf(':') + 1))) }
   Txt -Name 'PopupBox' -X 170 -Y 110 -W 1220 -H 500 -Bg '#FFFFD600' -Bindings ([ordered]@{
-    Visible = (PB 'Visible:return show;'); BackgroundColor = (PB 'BackgroundColor:return bg;')
+    BackgroundColor = (PB 'BackgroundColor:return bg;')
     Left = (PB 'Left:return px;'); Top = (PB 'Top:return py;'); Width = (PB 'Width:return pw;'); Height = (PB 'Height:return ph;')
   })
   Txt -Name 'PopupT1' -X 170 -Y 140 -W 1220 -H 160 -Size 120 -Text 'BANDEIRA' -Color '#FF000000' -Bindings ([ordered]@{
-    Visible = (PB 'Visible:return show;'); Text = (PB 'Text:return t1;'); TextColor = (PB 'TextColor:return fg;'); FontSize = (PB 'FontSize:return fs;')
+    Text = (PB 'Text:return t1;'); TextColor = (PB 'TextColor:return fg;'); FontSize = (PB 'FontSize:return fs;')
     Left = (PB 'Left:return px;'); Top = (PB "Top:return py + (t2 == '' ? ah * 0.29 : ah * 0.08);"); Width = (PB 'Width:return pw;'); Height = (PB 'Height:return ah * 0.42;')
   })
   Txt -Name 'PopupT2' -X 170 -Y 300 -W 1220 -H 160 -Size 120 -Text 'AMARELA' -Color '#FF000000' -Bindings ([ordered]@{
-    Visible = (PB "Visible:return show && t2 != '';"); Text = (PB 'Text:return t2;'); TextColor = (PB 'TextColor:return fg;'); FontSize = (PB 'FontSize:return fs;')
+    Visible = (PB "Visible:return t2 != '';"); Text = (PB 'Text:return t2;'); TextColor = (PB 'TextColor:return fg;'); FontSize = (PB 'FontSize:return fs;')
     Left = (PB 'Left:return px;'); Top = (PB 'Top:return py + ah * 0.5;'); Width = (PB 'Width:return pw;'); Height = (PB 'Height:return ah * 0.42;')
   })
   Txt -Name 'PopupBand' -X 170 -Y 475 -W 1220 -H 135 -Bg '#FF000000' -Bindings ([ordered]@{
-    Visible = (PB "Visible:return show && sub != '';")
+    Visible = (PB "Visible:return sub != '';")
     Left = (PB 'Left:return px;'); Top = (PB 'Top:return py + ah;'); Width = (PB 'Width:return pw;'); Height = (PB 'Height:return bh;')
   })
   Txt -Name 'PopupSub' -X 170 -Y 475 -W 1220 -H 135 -Size 80 -Text 'SETOR 1' -Color '#FFFFFFFF' -Bindings ([ordered]@{
-    Visible = (PB "Visible:return show && sub != '';"); Text = (PB 'Text:return sub;'); FontSize = (PB 'FontSize:return subFs;')
+    Visible = (PB "Visible:return sub != '';"); Text = (PB 'Text:return sub;'); FontSize = (PB 'FontSize:return subFs;')
     Left = (PB 'Left:return px;'); Top = (PB 'Top:return py + ah;'); Width = (PB 'Width:return pw;'); Height = (PB 'Height:return bh;')
+  })
+  $kids = $script:items.ToArray(); $script:items = $saved
+  [void]$script:items.Add([ordered]@{
+    '$type' = 'SimHub.Plugins.OutputPlugins.GraphicalDash.Models.Layer, SimHub.Plugins'
+    Height = [double]$H; Width = [double]$W; BackgroundColor = '#00FFFFFF'; BorderStyle = [ordered]@{}
+    Childrens = $kids; Group = $true; Left = 0.0; Top = 0.0; Visible = $true
+    Id = [guid]::NewGuid().ToString(); Name = 'Popup'; Sid = 0
+    Bindings = [ordered]@{ Visible = (B 'Visible' (JS "$statusJs return show;")) }
   })
 }
 
@@ -408,7 +414,7 @@ Txt -Name 'CurLap' -X $RX -Y 76 -W $RW -H 74 -Size 54 -Text '0:00.000' -Bindings
 Tile 'ULTIMA' $RX 162 $RW 96 $C.Yellow
 Txt -Name 'LastLap' -X $RX -Y 186 -W $RW -H 68 -Size 46 -Text '0:00.000' -Bindings ([ordered]@{
   Text      = (B 'Text' (NC '[{N}LastLapTime]') 'm\:ss\.fff')
-  TextColor = (B 'TextColor' (NC "if([{N}LastLapTime] = [{N}BestLapTime] && [{N}BestLapTime] > 0, '$($C.Purple)', '#FFFFFFFF')"))
+  TextColor = (B 'TextColor' (JS "var l = `$prop('{N}LastLapTime'), b = `$prop('{N}BestLapTime'); var ls = l ? (l.TotalSeconds !== undefined ? l.TotalSeconds : 0) : 0, bs = b ? (b.TotalSeconds !== undefined ? b.TotalSeconds : 0) : 0; return (bs > 0 && Math.abs(ls - bs) < 0.0005) ? '$($C.Purple)' : '#FFFFFFFF';"))
 })
 
 Tile 'MELHOR' $RX 266 $RW 96 $C.Purple
@@ -719,6 +725,25 @@ $carImages = @(foreach ($f in $carPngs) {
   [ordered]@{ Name = $f.BaseName; Extension = '.png'; Modified = $false; Optimized = $false; Width = $iw; Height = $ih
               Length = $bytes.Length; MD5 = (($md5.ComputeHash($bytes) | ForEach-Object { $_.ToString('x2') }) -join '') }
 })
+
+# ================= PRIORIDADE DE ATUALIZACAO (deixa a dash mais leve) =================
+# 0 ms = todo quadro (marcha, luzes, ERS, avisos). O resto atualiza so o necessario.
+$RefreshRules = @(
+  @(0,    '^(LED_|Gear|Fundo_Flags|Popup|ErsBar|Menu_)'),
+  @(100,  '^(Delta|Speed|CurLap|ErsPct|DRS$|BOX$|GapAhead)'),
+  @(250,  '^(Tile_|TyreTemp_|TyreZone_|TyreWear|Brake_|Car_Temp_|Car_Ring_|Car_Tyre|Warnings|Penalty|LastLap|BestLap|ErsMode|ErsUsed|PitWindow|Pos|Lap|Rejoin|Sec)'),
+  @(1000, '^(Wx|Eng|Press_|Compound|TyreIcon|BrakeBias|Dmg|Car_|CallVal_|CarTxt_|LapsLeft)')
+)
+function Set-Refresh($list) {
+  foreach ($it in $list) {
+    $ms = 0
+    foreach ($r in $RefreshRules) { if ($it.Name -match $r[1]) { $ms = $r[0]; break } }
+    if (-not $it.Bindings) { $ms = 0 }   # sem formula: nao precisa
+    $it.MinimumRefreshIntervalMS = [double]$ms
+    if ($it.Childrens) { Set-Refresh $it.Childrens }
+  }
+}
+Set-Refresh $screen1Items; Set-Refresh $screen2Items; Set-Refresh $screen3Items
 
 # ================= MONTA O ARQUIVO =================
 $screenId = [guid]::NewGuid().ToString()
