@@ -83,14 +83,12 @@ var ye = $prop('{N}Flag_Yellow');
 var k = 0.5 + 0.5 * Math.sin((Date.now() % 1400) / 1400 * 2 * Math.PI);
 function hx(v){ v = Math.max(0, Math.min(255, Math.round(v))); var s = v.toString(16); return s.length < 2 ? '0' + s : s; }
 function mix(a, b){ return '#FF' + hx(a[0]+(b[0]-a[0])*k) + hx(a[1]+(b[1]-a[1])*k) + hx(a[2]+(b[2]-a[2])*k); }
-var red = $prop('{N}Flag_Red') == 1, chq = $prop('{N}Flag_Checkered') == 1;
-var blk = $prop('{N}Flag_Black') == 1, grn = $prop('{N}Flag_Green') == 1 || fl == 1;
+var red = $prop('{N}Flag_Red') == 1;
+var grn = $prop('{N}Flag_Green') == 1 || fl == 1;
 if (red) return mix([230,0,0],[100,0,0]);
 if (sc == 1) return mix([255,196,0],[150,105,0]);
 if (sc == 2) return mix([255,140,0],[110,55,0]);
-if (sc == 3) return mix([0,140,60],[0,60,25]);
-if (chq) return (Math.floor(Date.now() / 400) % 2 == 0) ? '#FFE8E8E8' : '#FF202020';
-if (blk) return mix([60,60,60],[10,10,10]);
+if (sc == 3) return mix([142,36,170],[60,15,75]);
 if (fl == 3 || ye == 1) return mix([230,180,0],[120,90,0]);
 if (fl == 2) return mix([0,90,255],[0,35,120]);
 if (grn) return mix([0,200,80],[0,70,30]);
@@ -148,12 +146,12 @@ var m = $prop('{R}PlayerCarStatusData.m_ersDeployMode');
 var e = ($prop('{R}PlayerCarStatusData.m_ersStoreEnergy') || 0) / 4000000 * 100;
 var fast = Math.floor(Date.now() / 120) % 2 == 0;
 var low = e < 10, ot = m == 3;
-var flash = (low || ot) && fast;
+var flash = false;
 var mc = '#FFFFD600';
 '@
 Tile 'ERS' $LX 478 $LW 234 $C.Yellow ([ordered]@{
   BackgroundColor           = (B 'BackgroundColor' (JS "$ersMode if (!flash) return '#FF000000'; return low ? '#FFFF1744' : '#FFFF8C00';"))
-  'BorderStyle.BorderColor' = (B 'BorderStyle.BorderColor' (JS "$ersMode if (low) return fast ? '#FFFFFFFF' : '#FFFF1744'; if (ot) return fast ? '#FFFFFFFF' : '#FFFF8C00'; return '#FFFFD600';"))
+  'BorderStyle.BorderColor' = (B 'BorderStyle.BorderColor' (JS "$ersMode return '#FFFFD600';"))
 })
 Txt -Name 'ErsPct' -X ($LX + $LW - 200) -Y 484 -W 186 -H 40 -Size 34 -HA 2 -Text '100%' -Bindings ([ordered]@{
   Text      = (B 'Text' (NC "format(round(isnull([{R}PlayerCarStatusData.m_ersStoreEnergy],0) / 4000000 * 100, 0), '0') + '%'"))
@@ -161,7 +159,7 @@ Txt -Name 'ErsPct' -X ($LX + $LW - 200) -Y 484 -W 186 -H 40 -Size 34 -HA 2 -Text
 })
 Gauge -Name 'ErsBar' -X ($LX + 14) -Y 532 -W ($LW - 28) -H 64 -Bindings ([ordered]@{
   Value      = (B 'Value' (NC "isnull([{R}PlayerCarStatusData.m_ersStoreEnergy],0) / 4000000 * 100"))
-  GaugeColor = (B 'GaugeColor' (JS "$ersMode if (flash) return '#FFFFFFFF'; return low ? '#FFFF1744' : mc;"))
+  GaugeColor = (B 'GaugeColor' (JS "$ersMode return '#FFFFD600';"))
 })
 Txt -Name 'ErsMode' -X ($LX + 14) -Y 608 -W ($LW - 28) -H 44 -Size 30 -HA 0 -Text 'MEDIO' -Bindings ([ordered]@{
   Text      = (B 'Text' (JS "$ersMode if (low) return 'BATERIA BAIXA'; return m == 3 ? 'ULTRAPASSAGEM' : m == 2 ? 'HOTLAP' : m == 1 ? 'MEDIO' : 'NENHUM';"))
@@ -182,10 +180,10 @@ var dist = $prop('{R}PlayerCarStatusData.m_drsActivationDistance') || 0;
 var fast = Math.floor(Date.now() / 110) % 2 == 0;
 '@
 Txt -Name 'DRS' -X $CX -Y 50 -W 360 -H 104 -Size 44 -Text 'DRS' -Bg $C.Tile -Border (Border '#FF2A2A30') -Bindings ([ordered]@{
-  Text            = (B 'Text' (JS "$drsJs if (fault) return 'DRS FALHA'; if (open) return 'DRS ABERTO'; if (allowed) return 'DRS'; if (dist > 0) return 'DRS ' + dist + 'm'; return 'DRS';"))
-  BackgroundColor = (B 'BackgroundColor' (JS "$drsJs if (fault) return '#FF4A0000'; if (open) return fast ? '#FF00E676' : '#FF003D1A'; if (allowed) return '#FF0D2614'; return '#FF000000';"))
-  TextColor       = (B 'TextColor' (JS "$drsJs if (fault) return '#FFFF3B30'; if (open) return fast ? '#FF000000' : '#FF00E676'; if (allowed) return '#FF00E676'; if (dist > 0) return '#FFB0B0B8'; return '#FF3A3A42';"))
-  'BorderStyle.BorderColor' = (B 'BorderStyle.BorderColor' (JS "$drsJs if (fault) return '#FFFF3B30'; if (open) return fast ? '#FFFFFFFF' : '#FF00E676'; if (allowed) return '#FF00E676'; return '#FF2A2A30';"))
+  Text            = (B 'Text' (JS "$drsJs if (fault) return 'DRS FALHA'; if (open) return 'DRS ABERTO'; return 'DRS';"))
+  BackgroundColor = (B 'BackgroundColor' (JS "$drsJs if (fault) return '#FF4A0000'; if (open) return '#FF00E676'; return '#FF000000';"))
+  TextColor       = (B 'TextColor' (JS "$drsJs if (fault) return '#FFFF3B30'; if (open) return '#FF000000'; return '#FF3A3A42';"))
+  'BorderStyle.BorderColor' = (B 'BorderStyle.BorderColor' (JS "$drsJs if (fault) return '#FFFF3B30'; if (open) return '#FF00E676'; return '#FF2A2A30';"))
 })
 
 # BOX / PIT
@@ -220,46 +218,91 @@ $shiftJs = @'
 var p = $prop('{R}PlayerCarTelemetryData.m_revLightsPercent');
 if (p == null) { var r = $prop('{N}Rpms'), m = $prop('{N}MaxRpm'); p = m ? (r / m - 0.75) / 0.23 * 100 : 0; }
 '@
-Txt -Name 'Gear' -X $CX -Y 170 -W $CW -H 250 -Size 250 -Text 'N' -Bindings ([ordered]@{
-  Text      = (B 'Text' (NC "isnull([{N}Gear],'N')"))
-  TextColor = (B 'TextColor' (JS "$shiftJs return (p >= 97) ? '#FFFF1744' : '#FFFFFFFF';"))
-})
+# Animacao da marcha: detecta a troca e guarda o momento em "root" (memoria entre quadros).
+# Subiu: nasce menor e cresce (toque verde). Reduziu: nasce maior e encolhe (toque laranja). ~0,26 s.
+function GearDetect([string]$key) {
+  @"
+var g = `$prop('{N}Gear'); var n = (g == 'R') ? -1 : ((g == null || g == 'N') ? 0 : parseInt(g));
+var now = Date.now();
+if (root['${key}L'] === undefined) { root['${key}L'] = n; root['${key}T'] = 0; root['${key}D'] = 0; }
+if (n !== root['${key}L']) { root['${key}D'] = (n > root['${key}L']) ? 1 : -1; root['${key}L'] = n; root['${key}T'] = now; }
+var DUR = 260; var el = now - root['${key}T']; var k = Math.min(1, el / DUR); var e = 1 - Math.pow(1 - k, 3); var dir = root['${key}D'];
+"@
+}
+function GearAnimBindings([string]$key, [double]$base) {
+  $size = (GearDetect "${key}s") + "if (k >= 1) return $base; var s0 = dir > 0 ? 0.72 : 1.15; return $base * (s0 + (1 - s0) * e);"
+  $col = $shiftJs + (GearDetect "${key}c") + @'
+if (p >= 97) return '#FFFF1744';
+if (k >= 1 || dir == 0) return '#FFFFFFFF';
+var t = dir > 0 ? [0, 230, 118] : [255, 140, 0];
+function hx(v){ v = Math.max(0, Math.min(255, Math.round(v))); var s = v.toString(16); return s.length < 2 ? '0' + s : s; }
+return '#FF' + hx(t[0] + (255 - t[0]) * e) + hx(t[1] + (255 - t[1]) * e) + hx(t[2] + (255 - t[2]) * e);
+'@
+  [ordered]@{
+    Text      = (B 'Text' (NC "isnull([{N}Gear],'N')"))
+    TextColor = (B 'TextColor' (JS $col))
+    FontSize  = (B 'FontSize' (JS $size))
+  }
+}
+Txt -Name 'Gear' -X $CX -Y 170 -W $CW -H 250 -Size 250 -Text 'N' -Bindings (GearAnimBindings 'g1' 250)
 Txt -Name 'Speed' -X $CX -Y 420 -W $CW -H 66 -Size 52 -Text '0' -Bindings ([ordered]@{ Text = (B 'Text' (NC "format(isnull([{N}SpeedKmh],0),'0') + ' KM/H'")) })
 
-# FAIXA DE STATUS (Safety Car / VSC / bandeiras) por cima da marcha
+# AVISO (bandeiras / Safety Car)
+# Vermelha e amarela: TELA INTEIRA. SC, VSC, azul, verde, formacao: PAINEL GRANDE no meio.
+# Surge rapido (0,18 s). Fica 4 s a cada mudanca; a vermelha fica ate acabar.
 $statusJs = @'
 var sc = $prop('{R}PacketSessionData.m_safetyCarStatus') || 0;
 var fl = $prop('{R}PlayerCarStatusData.m_vehicleFiaFlags');
 var ye = $prop('{N}Flag_Yellow');
-var red = $prop('{N}Flag_Red') == 1, chq = $prop('{N}Flag_Checkered') == 1;
-var blk = $prop('{N}Flag_Black') == 1, grn = $prop('{N}Flag_Green') == 1 || fl == 1;
+var red = $prop('{N}Flag_Red') == 1;
+var grn = $prop('{N}Flag_Green') == 1 || fl == 1;
+var sec = ($prop('{R}PlayerLapData.m_sector') || 0) + 1;
 var scd = $prop('{R}PlayerLapData.m_safetyCarDelta');
-var scs = (scd == null) ? '' : '  ' + (scd >= 0 ? '+' : '') + scd.toFixed(1) + 's';
-var t = '', bg = '#FFFFC400', fg = '#FF000000';
-if (red) { t = 'BANDEIRA VERMELHA'; bg = '#FFE10600'; fg = '#FFFFFFFF'; }
-else if (sc == 1) t = 'SAFETY CAR' + scs;
-else if (sc == 2) { t = 'VSC' + scs; bg = '#FFFF8C00'; }
-else if (sc == 3) { t = 'VOLTA DE FORMACAO'; bg = '#FF00C853'; }
-else if (chq) { t = 'BANDEIRA QUADRICULADA'; bg = '#FFFFFFFF'; }
-else if (blk) { t = 'BANDEIRA PRETA'; bg = '#FF000000'; fg = '#FFFFFFFF'; }
-else if (fl == 3 || ye == 1) t = 'BANDEIRA AMARELA';
-else if (fl == 2) { t = 'BANDEIRA AZUL'; bg = '#FF2979FF'; fg = '#FFFFFFFF'; }
-else if (grn) { t = 'BANDEIRA VERDE'; bg = '#FF00C853'; }
-else {
-  var ps = $prop('{R}PlayerLapData.m_pitStatus') || 0;
-  var laneT = ($prop('{R}PlayerLapData.m_pitLaneTimeInLaneInMS') || 0) / 1000;
-  if (ps == 1 && laneT < 4) { t = 'ENTRADA DOS BOX'; bg = '#FF2979FF'; fg = '#FFFFFFFF'; }
-}
+var scs = (scd == null) ? '' : 'DELTA ' + (scd >= 0 ? '+' : '') + scd.toFixed(1) + 's';
+var t1 = '', t2 = '', sub = '', bg = '#FFFFD600', fg = '#FF000000', full = false;
+if (red) { t1 = 'BANDEIRA'; t2 = 'VERMELHA'; bg = '#FFFF0000'; full = true; }
+else if (sc == 1) { t1 = 'SAFETY CAR'; }
+else if (sc == 2) { t1 = 'VIRTUAL'; t2 = 'SAFETY CAR'; }
+else if (sc == 3) { t1 = 'VOLTA DE'; t2 = 'FORMACAO'; bg = '#FF8E24AA'; fg = '#FFFFFFFF'; }
+else if (fl == 3 || ye == 1) { t1 = 'BANDEIRA'; t2 = 'AMARELA'; sub = 'SETOR ' + sec; full = true; }
+else if (fl == 2) { t1 = 'BANDEIRA'; t2 = 'AZUL'; bg = '#FF2979FF'; fg = '#FFFFFFFF'; }
+else if (grn) { t1 = 'BANDEIRA'; t2 = 'VERDE'; bg = '#FF00C853'; }
+var t = t1 + ' ' + t2;
+var now = Date.now();
+if (root.pkL !== t) { root.pkL = t; root.pkT = now; }
+var el = now - root.pkT;
+var show = t1 != '' && (el < 4000 || red);
+var k = Math.min(1, el / 180); var e = 1 - Math.pow(1 - k, 3); var s = 0.8 + 0.2 * e;
+var PW = full ? 1560 : 1220, PH = full ? 720 : 500;
+var pw = PW * s, ph = PH * s, px = 780 - pw / 2, py = 360 - ph / 2;
+var bh = (sub != '') ? ph * 0.27 : 0, ah = ph - bh;
+var maxLen = Math.max(t1.length, t2.length, 1);
+var fs = Math.min(ah * 0.34, pw * 0.88 / (maxLen * 0.72));
+var subFs = Math.min(bh * 0.6, pw * 0.88 / (Math.max(sub.length, 1) * 0.72));
 '@
-function Add-Banner([double]$X, [double]$Y, [double]$Wd, [double]$Hh, [double]$Size) {
-Txt -Name 'StatusBanner' -X $X -Y $Y -W $Wd -H $Hh -Size $Size -Text 'SAFETY CAR' -Color '#FF000000' -Bg $C.Yellow -Border (Border '#FF000000' 2 8) -Bindings ([ordered]@{
-  Text            = (B 'Text' (JS "$statusJs return t;"))
-  Visible         = (B 'Visible' (JS "$statusJs return t != '';"))
-  BackgroundColor = (B 'BackgroundColor' (JS "$statusJs return bg;"))
-  TextColor       = (B 'TextColor' (JS "$statusJs return fg;"))
-})
+function Add-Popup {
+  function PB([string]$code) { B ($code.Split(':')[0]) (JS ("$statusJs " + $code.Substring($code.IndexOf(':') + 1))) }
+  Txt -Name 'PopupBox' -X 170 -Y 110 -W 1220 -H 500 -Bg '#FFFFD600' -Bindings ([ordered]@{
+    Visible = (PB 'Visible:return show;'); BackgroundColor = (PB 'BackgroundColor:return bg;')
+    Left = (PB 'Left:return px;'); Top = (PB 'Top:return py;'); Width = (PB 'Width:return pw;'); Height = (PB 'Height:return ph;')
+  })
+  Txt -Name 'PopupT1' -X 170 -Y 140 -W 1220 -H 160 -Size 120 -Text 'BANDEIRA' -Color '#FF000000' -Bindings ([ordered]@{
+    Visible = (PB 'Visible:return show;'); Text = (PB 'Text:return t1;'); TextColor = (PB 'TextColor:return fg;'); FontSize = (PB 'FontSize:return fs;')
+    Left = (PB 'Left:return px;'); Top = (PB "Top:return py + (t2 == '' ? ah * 0.29 : ah * 0.08);"); Width = (PB 'Width:return pw;'); Height = (PB 'Height:return ah * 0.42;')
+  })
+  Txt -Name 'PopupT2' -X 170 -Y 300 -W 1220 -H 160 -Size 120 -Text 'AMARELA' -Color '#FF000000' -Bindings ([ordered]@{
+    Visible = (PB "Visible:return show && t2 != '';"); Text = (PB 'Text:return t2;'); TextColor = (PB 'TextColor:return fg;'); FontSize = (PB 'FontSize:return fs;')
+    Left = (PB 'Left:return px;'); Top = (PB 'Top:return py + ah * 0.5;'); Width = (PB 'Width:return pw;'); Height = (PB 'Height:return ah * 0.42;')
+  })
+  Txt -Name 'PopupBand' -X 170 -Y 475 -W 1220 -H 135 -Bg '#FF000000' -Bindings ([ordered]@{
+    Visible = (PB "Visible:return show && sub != '';")
+    Left = (PB 'Left:return px;'); Top = (PB 'Top:return py + ah;'); Width = (PB 'Width:return pw;'); Height = (PB 'Height:return bh;')
+  })
+  Txt -Name 'PopupSub' -X 170 -Y 475 -W 1220 -H 135 -Size 80 -Text 'SETOR 1' -Color '#FFFFFFFF' -Bindings ([ordered]@{
+    Visible = (PB "Visible:return show && sub != '';"); Text = (PB 'Text:return sub;'); FontSize = (PB 'FontSize:return subFs;')
+    Left = (PB 'Left:return px;'); Top = (PB 'Top:return py + ah;'); Width = (PB 'Width:return pw;'); Height = (PB 'Height:return bh;')
+  })
 }
-Add-Banner ($CX + 14) 176 ($CW - 28) 62 38
 
 # AVISOS DE LIMITE DE PISTA / PENALIDADES (cantos do bloco da marcha)
 $warnJs = "var w = `$prop('{R}PlayerLapData.m_cornerCuttingWarnings'); if (w == null) w = `$prop('{R}PlayerLapData.m_totalWarnings') || 0;"
@@ -368,6 +411,7 @@ for ($i = 0; $i -lt $dmg.Count; $i++) {
   })
 }
 
+Add-Popup
 $screen1Items = $script:items.ToArray()
 
 # =====================================================================
@@ -376,124 +420,138 @@ $screen1Items = $script:items.ToArray()
 $script:items = New-Object System.Collections.ArrayList
 Add-BgAndLeds
 
-function DmgColor([string]$p) { "if(isnull($p,0) < 10, '#FF1FAE5B', if(isnull($p,0) < 30, '#FFFFC400', if(isnull($p,0) < 60, '#FFFF8C00', '#FFFF1744')))" }
-function DmgPart([string]$Name, [double]$X, [double]$Y, [double]$Wd, [double]$Hh, [string]$Field, [int]$Rad = 8, [string]$Label = '', [double]$Size = 17) {
+# Cores de dano: contorno neon forte + preenchimento translucido da mesma cor
+function DmgColor([string]$p) { "if(isnull($p,0) < 10, '#FF2BE04F', if(isnull($p,0) < 30, '#FFFFD600', if(isnull($p,0) < 60, '#FFFF8C00', '#FFFF1744')))" }
+function DmgFill([string]$p)  { "if(isnull($p,0) < 10, '#8C2BE04F', if(isnull($p,0) < 30, '#8CFFD600', if(isnull($p,0) < 60, '#8CFF8C00', '#8CFF1744')))" }
+function WearColor([string]$p) { "if(isnull($p,0) < 25, '#FF2BE04F', if(isnull($p,0) < 50, '#FFFFD600', if(isnull($p,0) < 70, '#FFFF8C00', '#FFFF1744')))" }
+function WearFill([string]$p)  { "if(isnull($p,0) < 25, '#8C2BE04F', if(isnull($p,0) < 50, '#8CFFD600', if(isnull($p,0) < 70, '#8CFF8C00', '#8CFF1744')))" }
+
+function DmgPart([string]$Name, [double]$X, [double]$Y, [double]$Wd, [double]$Hh, [string]$Field, [int]$Rad = 8, [string]$Label = '', [double]$Size = 16) {
   $p = "[{R}PlayerCarDamageData.$Field]"
-  $txt = $(if ($Label) { "'$Label ' + format(isnull($p,0),'0') + '%'" } else { "format(isnull($p,0),'0') + '%'" })
-  Txt -Name "Car_$Name" -X $X -Y $Y -W $Wd -H $Hh -Size $Size -Color '#FF0A0A0C' -Text '0%' -Bg '#FF1FAE5B' -Border (Border '#FF0A0A0C' 2 $Rad) -Bindings ([ordered]@{
-    Text            = (B 'Text' (NC $txt))
-    BackgroundColor = (B 'BackgroundColor' (NC (DmgColor $p)))
+  $txt = $(if ($Label -eq '-') { "''" } elseif ($Label) { "'$Label ' + format(isnull($p,0),'0') + '%'" } else { "format(isnull($p,0),'0') + '%'" })
+  Txt -Name "Car_$Name" -X $X -Y $Y -W $Wd -H $Hh -Size $Size -Color '#FFFFFFFF' -Text '' -Bg '#8C2BE04F' -Border (Border '#FF2BE04F' 4 $Rad) -Bindings ([ordered]@{
+    Text                      = (B 'Text' (NC $txt))
+    BackgroundColor           = (B 'BackgroundColor' (NC (DmgFill $p)))
+    'BorderStyle.BorderColor' = (B 'BorderStyle.BorderColor' (NC (DmgColor $p)))
   })
 }
-function Shape([string]$Name, [double]$X, [double]$Y, [double]$Wd, [double]$Hh, [int]$Rad, [string]$Bg = '#FF2A2D36', [string]$Bd = '#FF4A4E5A') {
-  Txt -Name "Car_$Name" -X $X -Y $Y -W $Wd -H $Hh -Bg $Bg -Border (Border $Bd 2 $Rad)
+function Shape([string]$Name, [double]$X, [double]$Y, [double]$Wd, [double]$Hh, [int]$Rad, [string]$Bg = '#FF141418', [string]$Bd = '#FF8A8A92', [int]$Bw = 3) {
+  Txt -Name "Car_$Name" -X $X -Y $Y -W $Wd -H $Hh -Bg $Bg -Border (Border $Bd $Bw $Rad)
 }
 function CarTyre([string]$K, [double]$X, [double]$Y, [double]$Wd, [double]$Hh) {
   $p = "[{N}TyreWear$K]"
-  Txt -Name "Car_Tyre_$K" -X $X -Y $Y -W $Wd -H $Hh -Size 20 -Color '#FF0A0A0C' -Text '0%' -Bg '#FF1FAE5B' -Border (Border '#FF0A0A0C' 3 14) -Bindings ([ordered]@{
-    Text            = (B 'Text' (NC "format(isnull($p,0),'0') + '%'"))
-    BackgroundColor = (B 'BackgroundColor' (NC "if(isnull($p,0) < 25, '#FF1FAE5B', if(isnull($p,0) < 50, '#FFFFC400', if(isnull($p,0) < 70, '#FFFF8C00', '#FFFF1744')))"))
+  Txt -Name "Car_Tyre_$K" -X $X -Y $Y -W $Wd -H $Hh -Bg '#8C2BE04F' -Border (Border '#FF2BE04F' 4 16) -Bindings ([ordered]@{
+    BackgroundColor           = (B 'BackgroundColor' (NC (WearFill $p)))
+    'BorderStyle.BorderColor' = (B 'BorderStyle.BorderColor' (NC (WearColor $p)))
+  })
+}
+# Anel com o desgaste do pneu + linha pontilhada ate o pneu
+function WearRing([string]$K, [double]$RX, [double]$RY, [double]$DotX, [double]$DotW) {
+  $p = "[{N}TyreWear$K]"
+  Txt -Name "Car_Ring_$K" -X ($RX - 65) -Y ($RY - 65) -W 130 -H 130 -Size 36 -Text '0%' -Bg '#FF000000' -Border (Border '#FF2BE04F' 9 65) -Bindings ([ordered]@{
+    Text                      = (B 'Text' (NC "format(isnull($p,0),'0') + '%'"))
+    'BorderStyle.BorderColor' = (B 'BorderStyle.BorderColor' (NC (WearColor $p)))
+  })
+  Txt -Name "Car_Dots_$K" -X $DotX -Y ($RY - 18) -W $DotW -H 30 -Size 22 -Weight 'Normal' -Color '#FFB0B0B8' -Text '. . . . . .'
+}
+# Caixinha com a temperatura do pneu
+function TempBox([string]$K, [double]$X, [double]$Y) {
+  $p = "[{N}TyreTemperature$K]"
+  Txt -Name "Car_Temp_$K" -X $X -Y $Y -W 76 -H 46 -Size 28 -Text '90' -Bg '#FF1E4FD8' -Border (Border '#FFFFFFFF' 2 4) -Bindings ([ordered]@{
+    Text            = (B 'Text' (NC "format(isnull($p,0),'0')"))
+    BackgroundColor = (B 'BackgroundColor' (NC "if(isnull($p,0) < 80, '#FF1E4FD8', if(isnull($p,0) <= 105, '#FF1E9E4A', if(isnull($p,0) <= 115, '#FFE07800', '#FFD81B3B')))"))
   })
 }
 function Callout([string]$Name, [double]$X, [double]$Y, [string]$Label, [string]$Field, [int]$HA = 0) {
   $p = "[{R}PlayerCarDamageData.$Field]"
-  Txt -Name "CallLbl_$Name" -X $X -Y $Y -W 120 -H 22 -Size 14 -HA $HA -Color $C.Label -Text $Label
-  Txt -Name "CallVal_$Name" -X $X -Y ($Y + 22) -W 120 -H 32 -Size 26 -HA $HA -Text '0%' -Bindings ([ordered]@{
+  Txt -Name "CallLbl_$Name" -X $X -Y $Y -W 150 -H 22 -Size 15 -HA $HA -Color $C.Label -Text $Label
+  Txt -Name "CallVal_$Name" -X $X -Y ($Y + 22) -W 150 -H 36 -Size 30 -HA $HA -Text '0%' -Bindings ([ordered]@{
     Text      = (B 'Text' (NC "format(isnull($p,0),'0') + '%'"))
     TextColor = (B 'TextColor' (NC (DmgColor $p)))
   })
 }
 
-# ---- coluna esquerda: resumo ao vivo ----
-Tile 'MARCHA ' $LX 50 $LW 250 $C.Red
-Txt -Name 'Gear2' -X $LX -Y 62 -W $LW -H 170 -Size 160 -Text 'N' -Bindings ([ordered]@{
-  Text      = (B 'Text' (NC "isnull([{N}Gear],'N')"))
-  TextColor = (B 'TextColor' (JS "$shiftJs return (p >= 97) ? '#FFFF1744' : '#FFFFFFFF';"))
-})
-Txt -Name 'Speed2' -X $LX -Y 234 -W $LW -H 58 -Size 40 -Text '0 KM/H' -Bindings ([ordered]@{ Text = (B 'Text' (NC "format(isnull([{N}SpeedKmh],0),'0') + ' KM/H'")) })
+# ---- coluna esquerda: resumo ao vivo (mais estreita) ----
+$L2X = 8; $L2W = 330
+Tile 'MARCHA ' $L2X 50 $L2W 250 $C.Red
+Txt -Name 'Gear2' -X $L2X -Y 62 -W $L2W -H 170 -Size 160 -Text 'N' -Bindings (GearAnimBindings 'g2' 160)
+Txt -Name 'Speed2' -X $L2X -Y 234 -W $L2W -H 58 -Size 36 -Text '0 KM/H' -Bindings ([ordered]@{ Text = (B 'Text' (NC "format(isnull([{N}SpeedKmh],0),'0') + ' KM/H'")) })
 
-Tile 'DELTA ' $LX 308 $LW 150 '#FF5A5A62'
-Txt -Name 'Delta2' -X $LX -Y 336 -W $LW -H 116 -Size 72 -Text '+0.000' -Bindings ([ordered]@{
+Tile 'DELTA ' $L2X 308 $L2W 150 '#FF5A5A62'
+Txt -Name 'Delta2' -X $L2X -Y 336 -W $L2W -H 116 -Size 64 -Text '+0.000' -Bindings ([ordered]@{
   Text      = (B 'Text' (JS "$deltaVal if (d == null) return '+0.000'; return (d >= 0 ? '+' : '-') + Math.abs(d).toFixed(3);"))
   TextColor = (B 'TextColor' (JS "$deltaVal if (d == null || Math.abs(d) < 0.0005) return '#FFFFFFFF'; return d < 0 ? '$($C.Green)' : '#FFFF3B30';"))
 })
 
-Tile 'ERS ' $LX 466 $LW 120 $C.Yellow ([ordered]@{
-  BackgroundColor           = (B 'BackgroundColor' (JS "$ersMode if (!flash) return '#FF000000'; return low ? '#FFFF1744' : '#FFFF8C00';"))
-  'BorderStyle.BorderColor' = (B 'BorderStyle.BorderColor' (JS "$ersMode if (low) return fast ? '#FFFFFFFF' : '#FFFF1744'; if (ot) return fast ? '#FFFFFFFF' : '#FFFF8C00'; return '#FFFFD600';"))
-})
-Txt -Name 'ErsPct2' -X ($LX + $LW - 200) -Y 470 -W 186 -H 36 -Size 30 -HA 2 -Text '100%' -Bindings ([ordered]@{
+Tile 'ERS ' $L2X 466 $L2W 120 $C.Yellow
+Txt -Name 'ErsPct2' -X ($L2X + $L2W - 200) -Y 470 -W 186 -H 36 -Size 30 -HA 2 -Text '100%' -Bindings ([ordered]@{
   Text      = (B 'Text' (NC "format(round(isnull([{R}PlayerCarStatusData.m_ersStoreEnergy],0) / 4000000 * 100, 0), '0') + '%'"))
-  TextColor = (B 'TextColor' (JS "$ersMode return flash ? '#FF000000' : (low ? '#FFFF1744' : '#FFFFFFFF');"))
+  TextColor = (B 'TextColor' (JS "$ersMode return low ? '#FFFF1744' : '#FFFFFFFF';"))
 })
-Gauge -Name 'ErsBar2' -X ($LX + 14) -Y 516 -W ($LW - 28) -H 54 -Bindings ([ordered]@{
-  Value      = (B 'Value' (NC "isnull([{R}PlayerCarStatusData.m_ersStoreEnergy],0) / 4000000 * 100"))
-  GaugeColor = (B 'GaugeColor' (JS "$ersMode if (flash) return '#FFFFFFFF'; return low ? '#FFFF1744' : mc;"))
+Gauge -Name 'ErsBar2' -X ($L2X + 14) -Y 516 -W ($L2W - 28) -H 54 -Color '#FFFFD600' -Bindings ([ordered]@{
+  Value = (B 'Value' (NC "isnull([{R}PlayerCarStatusData.m_ersStoreEnergy],0) / 4000000 * 100"))
 })
 
-Tile 'POSICAO / VOLTA' $LX 594 $LW 118 $C.Red
-Txt -Name 'PosLap2' -X $LX -Y 622 -W $LW -H 84 -Size 46 -Text 'P1   1/57' -Bindings ([ordered]@{ Text = (B 'Text' (NC "'P' + format(isnull([{N}Position],0),'0') + '   ' + format(isnull([{N}CurrentLap],0),'0') + '/' + format(isnull([{N}TotalLaps],0),'0')")) })
+Tile 'POSICAO / VOLTA' $L2X 594 $L2W 118 $C.Red
+Txt -Name 'PosLap2' -X $L2X -Y 622 -W $L2W -H 84 -Size 40 -Text 'P1   1/57' -Bindings ([ordered]@{ Text = (B 'Text' (NC "'P' + format(isnull([{N}Position],0),'0') + '   ' + format(isnull([{N}CurrentLap],0),'0') + '/' + format(isnull([{N}TotalLaps],0),'0')")) })
 
-# ---- centro: desenho do carro (vista de cima, bico para cima) ----
-$CarX = 408; $CarW = 624
-Tile 'CARRO' $CarX 50 $CarW 662 $C.Red
+# ---- centro: menu do carro (vista de cima, bico para cima) ----
+$CarX = 346; $CarW = 868
+Tile 'CARRO' $CarX 50 $CarW 662 '#FF2A2A30'
 $cx = $CarX + $CarW / 2
-# assoalho (por baixo de tudo)
-DmgPart 'Floor' ($cx - 150) 300 300 262 'm_floorDamage' 30 '' 1
-# suspensao dianteira e traseira
-foreach ($sy in @(222, 262)) { Shape "SuspFL_$sy" ($cx - 112) $sy 92 6 3 '#FF5A5E6A' '#FF5A5E6A'; Shape "SuspFR_$sy" ($cx + 20) $sy 92 6 3 '#FF5A5E6A' '#FF5A5E6A' }
-foreach ($sy in @(548, 592)) { Shape "SuspRL_$sy" ($cx - 112) $sy 80 6 3 '#FF5A5E6A' '#FF5A5E6A'; Shape "SuspRR_$sy" ($cx + 32) $sy 80 6 3 '#FF5A5E6A' '#FF5A5E6A' }
-# bico + monocoque + cockpit
-Shape 'Nose' ($cx - 20) 150 40 150 18
-Shape 'Mono' ($cx - 44) 280 88 196 28
-DmgPart 'SidepodL' ($cx - 132) 332 90 170 'm_sidepodDamage' 24
-DmgPart 'SidepodR' ($cx + 42) 332 90 170 'm_sidepodDamage' 24
-Shape 'Cockpit' ($cx - 26) 318 52 78 26 '#FF050506' '#FF7A7E8A'
-Shape 'Halo' ($cx - 6) 300 12 30 6 '#FF7A7E8A' '#FF7A7E8A'
-DmgPart 'Engine' ($cx - 36) 462 72 128 'm_engineDamage' 20
-DmgPart 'Gearbox' ($cx - 24) 588 48 40 'm_gearBoxDamage' 8 '' 14
+# assoalho por baixo de tudo
+DmgPart 'Floor' ($cx - 112) 300 224 310 'm_floorDamage' 56 '-'
+# suspensoes
+foreach ($sy in @(186, 226)) { Shape "SuspFL_$sy" ($cx - 84) $sy 68 5 2 '#FF8A8A92' '#FF8A8A92' 0; Shape "SuspFR_$sy" ($cx + 16) $sy 68 5 2 '#FF8A8A92' '#FF8A8A92' 0 }
+foreach ($sy in @(575, 605)) { Shape "SuspRL_$sy" ($cx - 88) $sy 70 5 2 '#FF8A8A92' '#FF8A8A92' 0; Shape "SuspRR_$sy" ($cx + 18) $sy 70 5 2 '#FF8A8A92' '#FF8A8A92' 0 }
+# bico, monocoque, sidepods, cockpit, motor, cambio
+Shape 'Nose' ($cx - 16) 84 32 230 16
+Shape 'Mono' ($cx - 40) 290 80 180 30
+DmgPart 'SidepodL' ($cx - 106) 330 60 180 'm_sidepodDamage' 26 '' 15
+DmgPart 'SidepodR' ($cx + 46) 330 60 180 'm_sidepodDamage' 26 '' 15
+Shape 'Cockpit' ($cx - 26) 318 52 74 26 '#FFD0D0D4' '#FF8A8A92'
+DmgPart 'Engine' ($cx - 42) 440 84 108 'm_engineDamage' 22 '' 18
+DmgPart 'Gearbox' ($cx - 18) 548 36 64 'm_gearBoxDamage' 8 '-'
 # asas
-DmgPart 'FWingL' ($cx - 192) 130 184 30 'm_frontLeftWingDamage' 6 'ASA E' 16
-DmgPart 'FWingR' ($cx + 8) 130 184 30 'm_frontRightWingDamage' 6 'ASA D' 16
-Shape 'FEndL' ($cx - 204) 118 14 54 4 '#FF4A4E5A' '#FF0A0A0C'
-Shape 'FEndR' ($cx + 190) 118 14 54 4 '#FF4A4E5A' '#FF0A0A0C'
-DmgPart 'Diffuser' ($cx - 100) 626 200 28 'm_diffuserDamage' 6 'DIFUSOR' 15
-DmgPart 'RWing' ($cx - 150) 656 300 38 'm_rearWingDamage' 6 'ASA TRASEIRA' 17
-Shape 'REndL' ($cx - 162) 646 14 56 4 '#FF4A4E5A' '#FF0A0A0C'
-Shape 'REndR' ($cx + 148) 646 14 56 4 '#FF4A4E5A' '#FF0A0A0C'
+DmgPart 'FWingL' ($cx - 152) 74 144 58 'm_frontLeftWingDamage' 20 'ASA E' 16
+DmgPart 'FWingR' ($cx + 8) 74 144 58 'm_frontRightWingDamage' 20 'ASA D' 16
+DmgPart 'Diffuser' ($cx - 80) 618 160 26 'm_diffuserDamage' 6 'DIFUSOR' 13
+DmgPart 'RWing' ($cx - 84) 650 168 50 'm_rearWingDamage' 10 'ASA TRAS.' 15
 # pneus (cor = desgaste)
-CarTyre 'FrontLeft'  ($cx - 182) 186 72 118
-CarTyre 'FrontRight' ($cx + 110) 186 72 118
-CarTyre 'RearLeft'   ($cx - 196) 506 84 124
-CarTyre 'RearRight'  ($cx + 112) 506 84 124
-# legendas laterais
-Callout 'Sidepod' ($CarX + 14) 360 'SIDEPOD' 'm_sidepodDamage'
-Callout 'Motor'   ($CarX + 14) 440 'MOTOR' 'm_engineDamage'
-Callout 'Floor'   ($CarX + $CarW - 134) 360 'ASSOALHO' 'm_floorDamage' 2
-Callout 'Gearbox' ($CarX + $CarW - 134) 440 'CAMBIO' 'm_gearBoxDamage' 2
-# legenda de cores
-$leg = @(@('#FF1FAE5B','OK'), @('#FFFFC400','LEVE'), @('#FFFF8C00','MEDIO'), @('#FFFF1744','GRAVE'))
-for ($i = 0; $i -lt 4; $i++) {
-  $ly = 560 + $i * 34
-  Txt -Name "LegSq_$i" -X ($CarX + 16) -Y ($ly + 6) -W 18 -H 18 -Bg $leg[$i][0] -Border (Border '#00FFFFFF' 0 4)
-  Txt -Name "LegTx_$i" -X ($CarX + 42) -Y $ly -W 90 -H 30 -Size 15 -HA 0 -Color $C.Label -Text $leg[$i][1]
-}
-Add-Banner ($CarX + 14) 62 ($CarW - 28) 50 30
+CarTyre 'FrontLeft'  ($cx - 152) 150 68 112
+CarTyre 'FrontRight' ($cx + 84)  150 68 112
+CarTyre 'RearLeft'   ($cx - 162) 535 74 112
+CarTyre 'RearRight'  ($cx + 88)  535 74 112
+# temperatura embaixo de cada pneu
+TempBox 'FrontLeft'  ($cx - 156) 268
+TempBox 'FrontRight' ($cx + 80)  268
+TempBox 'RearLeft'   ($cx - 163) 652
+TempBox 'RearRight'  ($cx + 87)  652
+# aneis de desgaste com linha pontilhada
+WearRing 'FrontLeft'  ($cx - 290) 206 ($cx - 222) 66
+WearRing 'FrontRight' ($cx + 290) 206 ($cx + 156) 66
+WearRing 'RearLeft'   ($cx - 290) 591 ($cx - 222) 58
+WearRing 'RearRight'  ($cx + 290) 591 ($cx + 164) 58
+# valores laterais
+Callout 'Sidepod' ($CarX + 16) 330 'SIDEPOD' 'm_sidepodDamage'
+Callout 'Motor'   ($CarX + 16) 410 'MOTOR' 'm_engineDamage'
+Callout 'Floor'   ($CarX + $CarW - 166) 330 'ASSOALHO' 'm_floorDamage' 2
+Callout 'Gearbox' ($CarX + $CarW - 166) 410 'CAMBIO' 'm_gearBoxDamage' 2
 
-# ---- coluna direita: motor, freios, pressao ----
-$PX = 1040; $PW = 512
+# ---- coluna direita: motor, freios, pressao (mais estreita) ----
+$PX = 1222; $PW = 330
 Tile 'DESGASTE DO MOTOR' $PX 50 $PW 300 $C.Orange
-$eng = @(@('MOTOR (ICE)','m_engineICEWear'), @('MGU-H','m_engineMGUHWear'), @('MGU-K','m_engineMGUKWear'),
-         @('BATERIA (ES)','m_engineESWear'), @('CENTRAL (CE)','m_engineCEWear'), @('TURBO (TC)','m_engineTCWear'))
+$eng = @(@('ICE','m_engineICEWear'), @('MGU-H','m_engineMGUHWear'), @('MGU-K','m_engineMGUKWear'),
+         @('BATERIA','m_engineESWear'), @('CENTRAL','m_engineCEWear'), @('TURBO','m_engineTCWear'))
 for ($i = 0; $i -lt $eng.Count; $i++) {
   $ey = 90 + $i * 42
   $p = "[{R}PlayerCarDamageData.$($eng[$i][1])]"
-  Txt -Name "EngLbl_$i" -X ($PX + 16) -Y $ey -W 170 -H 34 -Size 17 -HA 0 -Color '#FFCFCFD6' -Weight 'Normal' -Text $eng[$i][0]
-  Gauge -Name "EngBar_$i" -X ($PX + 190) -Y ($ey + 10) -W 220 -H 14 -Bindings ([ordered]@{
+  Txt -Name "EngLbl_$i" -X ($PX + 14) -Y $ey -W 110 -H 34 -Size 16 -HA 0 -Color '#FFCFCFD6' -Weight 'Normal' -Text $eng[$i][0]
+  Gauge -Name "EngBar_$i" -X ($PX + 124) -Y ($ey + 11) -W 130 -H 12 -Bindings ([ordered]@{
     Value      = (B 'Value' (NC "isnull($p,0)"))
     GaugeColor = (B 'GaugeColor' (NC (DmgColor $p)))
   })
-  Txt -Name "EngVal_$i" -X ($PX + 420) -Y $ey -W 76 -H 34 -Size 20 -HA 2 -Text '0%' -Bindings ([ordered]@{
+  Txt -Name "EngVal_$i" -X ($PX + 258) -Y $ey -W 60 -H 34 -Size 18 -HA 2 -Text '0%' -Bindings ([ordered]@{
     Text      = (B 'Text' (NC "format(isnull($p,0),'0') + '%'"))
     TextColor = (B 'TextColor' (NC (DmgColor $p)))
   })
@@ -503,18 +561,19 @@ $wheels = @(@('FrontLeft','DE',0,0), @('FrontRight','DD',1,0), @('RearLeft','TE'
 Tile 'FREIOS' $PX 358 $PW 170 $C.Red
 foreach ($wh in $wheels) {
   $p = "[{N}BrakeTemperature$($wh[0])]"
-  Txt -Name "Brake_$($wh[0])" -X ($PX + 16 + $wh[2] * 244) -Y (392 + $wh[3] * 66) -W 236 -H 58 -Size 26 -Text "$($wh[1]) 0$DEG" -Bg '#FF16161B' -Border (Border '#FF2A2A30' 2 8) -Bindings ([ordered]@{
-    Text      = (B 'Text' (NC "'$($wh[1])  ' + format(isnull($p,0),'0') + '$DEG'"))
+  Txt -Name "Brake_$($wh[0])" -X ($PX + 12 + $wh[2] * 155) -Y (392 + $wh[3] * 66) -W 151 -H 58 -Size 22 -Text "$($wh[1]) 0$DEG" -Bg '#FF16161B' -Border (Border '#FF2A2A30' 2 8) -Bindings ([ordered]@{
+    Text      = (B 'Text' (NC "'$($wh[1]) ' + format(isnull($p,0),'0') + '$DEG'"))
     TextColor = (B 'TextColor' (NC "if(isnull($p,0) < 300, '#FF4FC3F7', if(isnull($p,0) < 800, '#FF00E676', if(isnull($p,0) < 1000, '#FFFF8C00', '#FFFF1744')))"))
   })
 }
-Tile 'PRESSAO DOS PNEUS (PSI)' $PX 536 $PW 176 $C.Cyan
+Tile 'PRESSAO PNEUS (PSI)' $PX 536 $PW 176 $C.Cyan
 foreach ($wh in $wheels) {
   $p = "[{N}TyrePressure$($wh[0])]"
-  Txt -Name "Press_$($wh[0])" -X ($PX + 16 + $wh[2] * 244) -Y (572 + $wh[3] * 66) -W 236 -H 58 -Size 26 -Color $C.Cyan -Text "$($wh[1]) 0.0" -Bg '#FF16161B' -Border (Border '#FF2A2A30' 2 8) -Bindings ([ordered]@{
-    Text = (B 'Text' (NC "'$($wh[1])  ' + format(isnull($p,0),'0.0')"))
+  Txt -Name "Press_$($wh[0])" -X ($PX + 12 + $wh[2] * 155) -Y (572 + $wh[3] * 66) -W 151 -H 58 -Size 22 -Color $C.Cyan -Text "$($wh[1]) 0.0" -Bg '#FF16161B' -Border (Border '#FF2A2A30' 2 8) -Bindings ([ordered]@{
+    Text = (B 'Text' (NC "'$($wh[1]) ' + format(isnull($p,0),'0.0')"))
   })
 }
+Add-Popup
 $screen2Items = $script:items.ToArray()
 
 # ================= MONTA O ARQUIVO =================

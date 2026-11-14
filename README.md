@@ -11,18 +11,15 @@ Baixe o arquivo **[`F1 25 - Rafa Pro.simhubdash`](F1%2025%20-%20Rafa%20Pro.simhu
 ## O que tem
 
 ### Tela 1 – Corrida
-- **LEDs de RPM** (15), usando as luzes de troca do próprio jogo. Piscam azul na hora de trocar.
-- **Marcha gigante.** O número fica **vermelho** quando é hora de trocar.
+- **LEDs de RPM** (15), usando as luzes de troca do próprio jogo.
+- **Marcha gigante com animação:**
+  - Ao subir, o número cresce com um toque verde.
+  - Ao reduzir, ele encolhe com um toque laranja.
+  - Fica **vermelho** quando é hora de trocar.
 - **Delta vs melhor volta:** verde quando você está mais rápido, vermelho quando está mais lento.
 - **Gap para o carro da frente.** Mostra "LIDER" quando você está em primeiro.
-- **ERS** em amarelo, com o modo e o quanto foi usado na volta.
-  - Pisca **laranja** no modo ultrapassagem.
-  - Pisca **vermelho** com a bateria abaixo de 10%.
-- **DRS:**
-  - Mostra a distância até a zona ("DRS 120m").
-  - Fica verde quando está disponível.
-  - **Pisca forte** quando está aberto.
-  - Avisa falha.
+- **ERS** em amarelo, sem piscar. A barra desce conforme você gasta a bateria. Mostra o modo e o quanto foi usado na volta.
+- **DRS:** fica apagado e **acende verde** quando abre. Também avisa falha.
 - **BOX:**
   - Janela de parada e número de paradas.
   - "BOX BOX" quando você está dentro da janela.
@@ -39,32 +36,35 @@ Baixe o arquivo **[`F1 25 - Rafa Pro.simhubdash`](F1%2025%20-%20Rafa%20Pro.simhu
 ### Tela 2 – Carro
 ![Tela do carro](imagens/16_tela2_carro_danificado.png)
 
-- **Desenho do carro** em que cada peça muda de cor conforme o dano: asas, assoalho, difusor, sidepods, motor, câmbio e os 4 pneus pelo desgaste.
+- **Menu do carro:** desenho do carro em neon, em que cada peça muda de cor conforme o dano. Mostra asas, assoalho, difusor, sidepods, motor e câmbio.
+- **Anéis com o desgaste de cada pneu**, ligados ao pneu por uma linha pontilhada.
+- **Temperatura embaixo de cada pneu.**
 - **Desgaste do motor:** ICE, MGU-H, MGU-K, bateria, eletrônica e turbo.
 - **Temperatura dos freios** e **pressão dos pneus**.
 - Marcha, delta, ERS e posição, para continuar correndo nessa tela.
 
 ### Bandeiras e Safety Car (nas duas telas)
-O fundo da dash **pulsa** com a cor da situação, e aparece uma faixa em cima da marcha.
+O aviso **surge rápido por cima da dash** e some depois de 4 segundos. A bandeira vermelha fica na tela até acabar.
+- **Bandeira vermelha** e **bandeira amarela** tomam a **tela inteira**. A amarela mostra o setor.
+- **Safety Car, VSC, azul, verde e volta de formação** aparecem num **painel grande** no meio da tela.
 
 | | |
 |---|---|
-| **Safety Car** (com delta para o SC)<br>![Safety Car](imagens/02_safety_car.png) | **Virtual Safety Car**<br>![VSC](imagens/03_virtual_sc.png) |
 | **Bandeira vermelha**<br>![Vermelha](imagens/04_bandeira_vermelha.png) | **Bandeira amarela**<br>![Amarela](imagens/05_bandeira_amarela.png) |
+| **Safety Car**<br>![Safety Car](imagens/02_safety_car.png) | **Virtual Safety Car**<br>![VSC](imagens/03_virtual_sc.png) |
 | **Bandeira azul**<br>![Azul](imagens/06_bandeira_azul.png) | **Bandeira verde**<br>![Verde](imagens/07_bandeira_verde.png) |
-| **Bandeira quadriculada**<br>![Quadriculada](imagens/08_quadriculada.png) | **Bandeira preta**<br>![Preta](imagens/09_bandeira_preta.png) |
-| **Volta de formação**<br>![Formação](imagens/10_volta_formacao.png) | |
+| **Volta de formação** (roxo)<br>![Formação](imagens/10_volta_formacao.png) | |
 
 ## Todos os modos
 
 | | |
 |---|---|
 | **Corrida normal**<br>![Normal](imagens/01_tela1_corrida.png) | **Entrada dos box**<br>![Entrada box](imagens/12_entrada_box.png) |
-| **Limitador, DRS aberto, penalidade e volta invalidada**<br>![Box DRS penalidade](imagens/11_box_drs_penalidade.png) | **Bateria baixa** (pisca vermelho)<br>![Bateria baixa](imagens/14_bateria_baixa.png) |
-| **DRS aberto + ERS ultrapassagem + troca de marcha** (fase A da piscada)<br>![Piscando A](imagens/13_piscando_fase_A.png) | **Mesma situação** (fase B da piscada)<br>![Piscando B](imagens/13_piscando_fase_B.png) |
-| **Tela do carro**<br>![Carro](imagens/15_tela2_carro.png) | **Tela do carro com danos + Safety Car**<br>![Carro danificado](imagens/16_tela2_carro_danificado.png) |
+| **Limitador, DRS aberto, penalidade e volta invalidada**<br>![Box DRS penalidade](imagens/11_box_drs_penalidade.png) | **Bateria baixa**<br>![Bateria baixa](imagens/14_bateria_baixa.png) |
+| **DRS aceso + ERS em ultrapassagem + hora de trocar**<br>![DRS e ERS](imagens/13_drs_aberto_ultrapassagem.png) | **Tela do carro**<br>![Carro](imagens/15_tela2_carro.png) |
+| **Marcha subindo** (animação)<br>![Subindo](imagens/17_marcha_subindo.png) | **Marcha reduzindo** (animação)<br>![Reduzindo](imagens/18_marcha_reduzindo.png) |
 
-> As imagens são prévias estáticas. No jogo, o fundo das bandeiras pulsa, e o DRS, o ERS e o box piscam alternando entre as duas fases.
+> As imagens são prévias estáticas. No jogo, os avisos e a marcha são animados.
 
 ## Como instalar
 
