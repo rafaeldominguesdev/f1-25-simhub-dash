@@ -1,7 +1,7 @@
 # F1 25 - Rafa Pro (60 fps, sem SimHub)
 
 App para o PC Windows do jogo: liga a dash do iPhone a 60 fps e tem uma janela para configurar tudo
-(tema, telas, botão do volante para trocar de tela, avisos, unidades).
+(2 layouts da dash, Clássico e F1, tema, telas, botão do volante para trocar de tela, avisos, unidades).
 
 ## Instalar (uma vez)
 
