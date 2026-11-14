@@ -41,10 +41,13 @@ function lap(t) {
   const b = header(2, L.voltas), o = 29 + P * 57;
   const lapMs = (t % 90000);
   b.writeUInt32LE(91904, o); b.writeUInt32LE(lapMs, o + 4);
+  // setores da volta atual: S1 mais rapido que o melhor (roxo), S2 mais lento (amarelo)
+  if (lapMs > 28000) { b.writeUInt16LE(27980, o + 8); b.writeUInt8(0, o + 10); }
+  if (lapMs > 57000) { b.writeUInt16LE(28900, o + 11); b.writeUInt8(0, o + 13); }
   b.writeUInt16LE(482, o + 14); b.writeUInt8(1, o + 16);
   b.writeFloatLE(lapMs / 90000 * 5000, o + 20);
   b.writeUInt8(4, o + 32); b.writeUInt8(23 + Math.floor(t / 90000), o + 33);
-  b.writeUInt8(cen === 'box' ? 1 : 0, o + 34); b.writeUInt8(0, o + 35); b.writeUInt8(1, o + 36);
+  b.writeUInt8(cen === 'box' ? 1 : 0, o + 34); b.writeUInt8(0, o + 35); b.writeUInt8(lapMs > 57000 ? 2 : lapMs > 28000 ? 1 : 0, o + 36);
   b.writeUInt8(cen === 'box' ? 1 : 0, o + 37); b.writeUInt8(cen === 'box' ? 5 : 0, o + 38);
   b.writeUInt8(1, o + 39); b.writeUInt8(1, o + 40);
   b.writeUInt16LE(cen === 'box' ? 2500 : 0, o + 47);

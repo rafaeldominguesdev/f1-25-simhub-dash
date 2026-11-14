@@ -26,6 +26,7 @@ if (MODO_APP) {
 // ================= CONFIGURACAO (config.json) =================
 const CONFIG_PATH = path.join(PASTA, 'config.json');
 const PADRAO = {
+  layout: 'classico',           // 'classico' (o desenho original) ou 'f1' (estilo transmissao)
   tema: 'classico',
   destaque: '',                 // cor de destaque propria ('' = a do tema)
   telas: { corrida: true, carro: true, info: true },
@@ -52,6 +53,7 @@ function limpar(c) {
   c.telaInicial = Math.max(0, Math.min(2, Math.round(c.telaInicial) || 0));
   c.avisos.duracao = Math.max(1, Math.min(15, Math.round(c.avisos.duracao) || 4));
   c.controle.proxima = c.controle.proxima >>> 0; c.controle.anterior = c.controle.anterior >>> 0;
+  if (!['classico', 'f1'].includes(c.layout)) c.layout = 'classico';
   if (!['kmh', 'mph'].includes(c.unidades.velocidade)) c.unidades.velocidade = 'kmh';
   if (!['c', 'f'].includes(c.unidades.temperatura)) c.unidades.temperatura = 'c';
   if (!/^#[0-9a-fA-F]{6}$/.test(c.destaque)) c.destaque = '';
@@ -79,7 +81,7 @@ function novoEstado() {
     ok: false, fmt: 0,
     // corrida
     pos: 0, lap: 0, totalLaps: 0, gap: null, delta: null,
-    curLap: 0, lastLap: 0, bestLap: 0, invalid: false, sector: 0,
+    curLap: 0, lastLap: 0, bestLap: 0, invalid: false, sector: 0, curS1: 0, curS2: 0,
     warnings: 0, penalties: 0, dt: 0, sg: 0,
     pitStatus: 0, stops: 0, laneMs: 0, stopMs: 0,
     // telemetria
@@ -192,6 +194,8 @@ function lapData(b) {
   const o = HDR + playerIdx * F.volta;
   S.lastLap = b.readUInt32LE(o);
   S.curLap = b.readUInt32LE(o + 4);
+  S.curS1 = b.readUInt8(o + 10) * 60 + b.readUInt16LE(o + 8) / 1000;  // setores da volta atual
+  S.curS2 = b.readUInt8(o + 13) * 60 + b.readUInt16LE(o + 11) / 1000;
   S.gap = b.readUInt8(o + 16) * 60 + b.readUInt16LE(o + 14) / 1000;
   const dist = b.readFloatLE(o + 20);
   S.scDelta = b.readFloatLE(o + 28);
