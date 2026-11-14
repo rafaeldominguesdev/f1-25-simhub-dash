@@ -9,27 +9,31 @@
 <meta name="apple-mobile-web-app-title" content="F1 Dash">
 <meta name="theme-color" content="#000000">
 <title>F1 25 Dash</title>
-<link rel="icon" href="data:,">
+<link rel="icon" href="/icone.ico">
+<script src="/temas.js"></script>
 <style>
   @font-face { font-family: 'Saira'; src: url(fonte/saira.woff2) format('woff2'); font-weight: 100 900; font-stretch: 50% 125%; }
   html, body { margin: 0; height: 100%; background: #000; overflow: hidden; touch-action: none;
     -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; }
   #stage { position: absolute; left: 0; top: 0; width: 1560px; height: 720px; transform-origin: 0 0;
-    background: #050506; overflow: hidden; color: #fff;
+    background: var(--fundo); overflow: hidden; color: var(--texto);
     font-family: 'Saira', system-ui, sans-serif; font-stretch: 125%; font-weight: 700; }
   .b { position: absolute; box-sizing: border-box; display: flex; align-items: center; justify-content: center;
     white-space: nowrap; overflow: hidden; line-height: 1; }
   .l { justify-content: flex-start; }
   .r { justify-content: flex-end; }
-  .tile { background: #000; border: 2px solid; border-radius: 10px; }
-  .lbl { color: #8E8E96; font-size: 17px; justify-content: flex-start; }
+  .tile { background: var(--bloco); border: 2px solid; border-radius: 10px; }
+  .lbl { color: var(--rotulo); font-size: 17px; justify-content: flex-start; letter-spacing: .3px; }
   .scr { position: absolute; inset: 0; display: none; }
-  .scr.on { display: block; }
-  .bar { position: absolute; background: #1A1A1E; border-radius: 6px; overflow: hidden; }
-  .bar > i { position: absolute; left: 0; top: 0; bottom: 0; width: 0; display: block; }
+  .scr.on { display: block; animation: entra .16s ease-out; }
+  @keyframes entra { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .bar { position: absolute; background: var(--caixa2); border-radius: 6px; overflow: hidden; }
+  .bar > i { position: absolute; left: 0; top: 0; bottom: 0; width: 0; display: block; border-radius: inherit; }
   .gear { will-change: transform; }
   svg { display: block; position: absolute; }
-  #popup { position: absolute; display: none; left: 0; top: 0; will-change: transform; }
+  .menu { cursor: pointer; }
+  #popup { position: absolute; display: none; left: 0; top: 0; will-change: transform; border-radius: 18px; }
+  #popup.full { border-radius: 0; }
 </style>
 </head>
 <body>
@@ -109,7 +113,7 @@
     </g>
     <circle cx="100" cy="60" r="22" fill="#FFC233"/>
   </g>
-  <g class="cloud"><path d="M40,118 C22,118 14,104 20,92 C25,82 36,79 44,82 C48,66 62,58 76,60 C90,62 99,72 101,84 C112,82 124,90 124,103 C124,113 116,118 106,118 Z" fill="#DDE6F2"/></g>
+  <g class="cloud"><path d="M40,118 C22,118 14,104 20,92 C25,82 36,79 44,82 C48,66 62,58 76,60 C90,62 99,72 101,84 C112,82 124,90 124,103 C124,113 116,118 106,118 Z" fill="#DDE6F2" stroke="#9AA6B8" stroke-width="2"/></g>
   <g class="darkcloud"><path d="M36,98 C18,98 10,84 16,72 C21,62 32,59 40,62 C44,46 58,38 72,40 C86,42 95,52 97,64 C108,62 120,70 120,83 C120,93 112,98 102,98 Z" fill="#8C97A8"/></g>
   <g class="lightrain" stroke="#4FA8FF" stroke-width="6" stroke-linecap="round">
     <line x1="44" y1="112" x2="38" y2="128"/><line x1="72" y1="112" x2="66" y2="128"/><line x1="100" y1="112" x2="94" y2="128"/>
@@ -124,7 +128,7 @@
 
 <!-- botoes do menu (mesmos de ferramentas/menu.html) -->
 <template id="menuSvg">
-<svg xmlns="http://www.w3.org/2000/svg" width="60" height="42" viewBox="0 0 120 84">
+<svg xmlns="http://www.w3.org/2000/svg" width="60" height="42" viewBox="0 0 120 84" class="menu">
   <rect class="bg" x="3" y="3" width="114" height="78" rx="16" stroke-width="3"/>
   <g class="i0" fill="none" stroke-linecap="round" stroke-width="7">
     <path d="M30,60 A30,30 0 1 1 90,60"/><line x1="60" y1="56" x2="78" y2="32"/>
@@ -145,22 +149,35 @@
 
 <script>
 'use strict';
-// ================= CORES =================
-const C = { label: '#8E8E96', white: '#FFFFFF', red: '#E10600', green: '#00E676', purple: '#B14CFF', yellow: '#FFC400',
-  blue: '#2979FF', cyan: '#00E5FF', orange: '#FF8C00', grey: '#5A5A62', dark: '#2A2A30' };
+const PREVIA = /[?&]previa=1/.test(location.search); // miniatura dentro do app de configuracao
+
+// ================= CONFIG (vem do PC; aqui so o padrao ate chegar) =================
+let CFG = {
+  tema: 'classico', destaque: '', telas: { corrida: true, carro: true, info: true }, telaInicial: 0,
+  blocos: {}, avisos: { duracao: 4, amarela: true, azul: true, verde: true, sc: true, vsc: true, vermelha: true, formacao: true, som: false },
+  unidades: { velocidade: 'kmh', temperatura: 'c' }, leds: 'classico', drsDistancia: true,
+};
+let TH = coresDoTema('classico');
+
+// ================= CORES (tudo pelo tema: var(--nome)) =================
+const V = (n) => `var(--${n})`;
 const DEG = '°';
 const lvl = (v, a) => v < a[0] ? 0 : v < a[1] ? 1 : v < a[2] ? 2 : 3;
-const NEON = ['#2BE04F', '#FFD600', '#FF8C00', '#FF1744'];
+const NEON = ['#2BE04F', '#FFD600', '#FF8C00', '#FF1744'];      // pecas do carro (desenho)
 const NEON_L = ['#8DFF9E', '#FFF27A', '#FFC070', '#FF7A8C'];
 const DMG = [10, 30, 60], WEAR = [25, 50, 70];
-const tempCol = (t) => t < 80 ? '#2979FF' : t <= 105 ? '#00C853' : t <= 115 ? '#FF8C00' : '#FF1744';
+const tempCol = (t) => t < 80 ? V('azul') : t <= 105 ? V('verde2') : t <= 115 ? V('laranja') : V('vermelho');
 const tempBg = (t) => t < 80 ? '#1E4FD8' : t <= 105 ? '#1E9E4A' : t <= 115 ? '#E07800' : '#D81B3B';
-const wearCol = (w) => ['#00C853', '#FFD600', '#FF8C00', '#FF1744'][lvl(w, WEAR)];
-const brakeCol = (t) => t < 300 ? '#4FC3F7' : t < 800 ? '#00E676' : t < 1000 ? '#FF8C00' : '#FF1744';
-const listCol = (d) => d < 15 ? '#00C853' : d < 40 ? '#FFC400' : '#FF1744';
-const CMP = { 16: ['S', 'MACIO', '#FF1744'], 17: ['M', 'MEDIO', '#FFD600'], 18: ['H', 'DURO', '#F2F2F2'],
-  7: ['I', 'INTER', '#00E676'], 8: ['W', 'CHUVA', '#2979FF'] };
+const wearCol = (w) => [V('verde2'), V('amarelo'), V('laranja'), V('vermelho')][lvl(w, WEAR)];
+const brakeCol = (t) => t < 300 ? V('ciano') : t < 800 ? V('verde') : t < 1000 ? V('laranja') : V('vermelho');
+const listCol = (d) => d < 15 ? V('verde2') : d < 40 ? V('amarelo2') : V('vermelho');
+const CMP = { 16: ['S', 'MACIO', V('vermelho')], 17: ['M', 'MEDIO', V('amarelo')], 18: ['H', 'DURO', V('duro')],
+  7: ['I', 'INTER', V('verde')], 8: ['W', 'CHUVA', V('azul')] };
 const WX = ['LIMPO', 'POUCAS NUVENS', 'NUBLADO', 'CHUVA FRACA', 'CHUVA FORTE', 'TEMPESTADE'];
+
+// unidades
+const vel = (kmh) => CFG.unidades.velocidade === 'mph' ? Math.round(kmh * 0.621371) + ' MPH' : kmh + ' KM/H';
+const tmp = (c) => CFG.unidades.temperatura === 'f' ? Math.round(c * 1.8 + 32) : Math.round(c);
 
 // ================= MONTAGEM (coordenadas da base 1560x720) =================
 const stage = document.getElementById('stage');
@@ -184,10 +201,9 @@ function tile(parent, label, x, y, w, h, accent) {
   el(parent, x + 14, y + 6, w - 28, 26, { cls: 'lbl', text: label });
   return t;
 }
-function bar(parent, x, y, w, h, color, bg) {
+function bar(parent, x, y, w, h, color) {
   const b = document.createElement('div'); b.className = 'bar';
   Object.assign(b.style, { left: x + 'px', top: y + 'px', width: w + 'px', height: h + 'px' });
-  if (bg) b.style.background = bg;
   const i = document.createElement('i'); i.style.background = color; b.appendChild(i);
   parent.appendChild(b);
   return i;
@@ -198,87 +214,102 @@ function svgFrom(id, parent, x, y) {
   parent.appendChild(s);
   return s;
 }
+// bloco que pode ser escondido pelo app de configuracao
+const BLOCOS = {};
+function bloco(parent, nome) {
+  const g = document.createElement('div'); parent.appendChild(g);
+  (BLOCOS[nome] = BLOCOS[nome] || []).push(g);
+  return g;
+}
 
 // atualiza so quando muda (deixa leve a 60 fps)
 function T(e, v) { if (e._t !== v) { e._t = v; e.textContent = v; } }
 function P(e, prop, v) { const k = '_' + prop; if (e[k] !== v) { e[k] = v; e.style[prop] = v; } }
-function A(e, attr, v) { const k = '_a' + attr; if (e[k] !== v) { e[k] = v; e.setAttribute(attr, v); } }
+const fit = (txt, maxW, base) => Math.min(base, Math.floor(maxW / (Math.max(1, txt.length) * 0.74))) + 'px';
 
 const E = {}; // referencias
 // ---------- cabecalho: menu + LEDs (iguais nas 3 telas) ----------
 const screens = [0, 1, 2].map(() => { const s = document.createElement('div'); s.className = 'scr'; stage.appendChild(s); return s; });
-const header = document.createElement('div'); header.className = 'scr on'; stage.appendChild(header);
+const header = document.createElement('div'); header.className = 'scr on'; header.style.animation = 'none'; stage.appendChild(header);
 E.menu = [0, 1, 2].map((k) => {
   const s = svgFrom('menuSvg', header, 8 + k * 64, 4);
   [0, 1, 2].forEach((j) => { s.querySelector('.i' + j).style.display = j === k ? '' : 'none'; });
   s.addEventListener('pointerdown', (ev) => { ev.preventDefault(); show(k); });
   return s;
 });
-const LEDC = ['green', 'green', 'green', 'green', 'green', 'red', 'red', 'red', 'red', 'red', 'purple', 'purple', 'purple', 'purple', 'purple'].map((c) => C[c]);
-E.leds = LEDC.map((_, i) => el(header, 212 + i * 89, 8, 84, 34, { bg: '#19191E', radius: 6 }));
-E.msg = el(header, 212, 8, 1340, 34, { size: 18, color: '#8E8E96', cls: 'l', bg: '#19191E', radius: 6 });
-E.msg.style.paddingLeft = '14px'; E.msg.style.display = 'none';
+E.leds = Array.from({ length: 15 }, (_, i) => el(header, 212 + i * 89, 8, 84, 34, { bg: V('ledoff'), radius: 6 }));
+E.msg = el(header, 212, 8, 1340, 34, { size: 18, color: '#FFFFFF', bg: '#B00020', radius: 6 });
+E.msg.style.display = 'none';
 
 // ---------- TELA 1: CORRIDA ----------
 (function () {
   const p = screens[0];
   const LX = 8, LW = 400, CX = 416, CW = 728, RX = 1152, RW = 400;
-  tile(p, 'POS', LX, 50, 196, 104, C.red);
+  tile(p, 'POS', LX, 50, 196, 104, V('destaque'));
   E.pos = el(p, LX, 74, 196, 78, { size: 52 });
-  tile(p, 'VOLTA', LX + 204, 50, 196, 104, C.red);
+  tile(p, 'VOLTA', LX + 204, 50, 196, 104, V('destaque'));
   E.lap = el(p, LX + 204, 74, 196, 78, { size: 38 });
-  tile(p, 'DELTA vs MELHOR', LX, 162, LW, 180, C.grey);
-  E.delta = el(p, LX, 192, LW, 144, { size: 84 });
-  tile(p, 'GAP FRENTE', LX, 350, LW, 120, C.cyan);
-  E.gap = el(p, LX, 378, LW, 86, { size: 50, color: C.cyan });
-  E.drs = el(p, LX, 478, LW, 113, { cls: 'tile', size: 44, text: 'DRS' });
-  E.box = el(p, LX, 599, LW, 113, { cls: 'tile', size: 38, text: 'BOX' });
-  E.boxSub = el(p, LX, 674, LW, 30, { size: 16, color: C.label, weight: 500 });
+  let g = bloco(p, 'delta');
+  tile(g, 'DELTA vs MELHOR', LX, 162, LW, 180, V('cinza'));
+  E.delta = el(g, LX, 192, LW, 144, { size: 84 });
+  g = bloco(p, 'gap');
+  tile(g, 'GAP FRENTE', LX, 350, LW, 120, V('frio'));
+  E.gap = el(g, LX, 378, LW, 86, { size: 50, color: V('frio') });
+  g = bloco(p, 'drs');
+  E.drs = el(g, LX, 478, LW, 113, { cls: 'tile', size: 44, text: 'DRS' });
+  E.drsSub = el(g, LX, 556, LW, 28, { size: 16, weight: 600 });
+  g = bloco(p, 'box');
+  E.box = el(g, LX, 599, LW, 113, { cls: 'tile', size: 38, text: 'BOX' });
+  E.boxSub = el(g, LX, 674, LW, 30, { size: 16, color: V('rotulo'), weight: 500 });
 
-  E.ersTile = tile(p, 'ERS', CX, 50, CW, 104, C.yellow);
-  E.ersPct = el(p, CX + CW - 200, 52, 186, 36, { size: 32, cls: 'r' });
-  E.ersBar = bar(p, CX + 14, 92, CW - 28, 30, '#FFD600');
-  E.ersMode = el(p, CX + 70, 54, 330, 32, { size: 22, cls: 'l' });
-  E.ersUsed = el(p, CX + 14, 124, CW - 28, 26, { size: 16, cls: 'l', color: C.label });
+  g = bloco(p, 'ers');
+  tile(g, 'ERS', CX, 50, CW, 104, V('amarelo2'));
+  E.ersPct = el(g, CX + CW - 200, 52, 186, 36, { size: 32, cls: 'r' });
+  E.ersBar = bar(g, CX + 14, 92, CW - 28, 30, V('amarelo'));
+  E.ersMode = el(g, CX + 70, 54, 330, 32, { size: 22, cls: 'l' });
+  E.ersUsed = el(g, CX + 14, 124, CW - 28, 26, { size: 16, cls: 'l', color: V('rotulo') });
 
-  tile(p, 'MARCHA', CX, 162, CW, 330, C.red);
+  tile(p, 'MARCHA', CX, 162, CW, 330, V('destaque'));
   E.gear1 = el(p, CX, 170, CW, 250, { size: 250, cls: 'gear' });
   E.speed1 = el(p, CX, 420, CW, 66, { size: 52 });
   E.warn = el(p, CX + 14, 244, 200, 34, { size: 18, cls: 'l' });
-  E.pen = el(p, CX + CW - 274, 244, 260, 34, { size: 18, cls: 'r', color: '#FF1744' });
+  E.pen = el(p, CX + CW - 274, 244, 260, 34, { size: 18, cls: 'r', color: V('vermelho') });
 
-  tile(p, 'PNEUS', CX, 500, CW, 212, C.white);
+  g = bloco(p, 'pneus');
+  tile(g, 'PNEUS', CX, 500, CW, 212, V('forte'));
   // DE, DD, TE, TD
   E.tyres = [['L', 530], ['R', 530], ['L', 620], ['R', 620]].map(([side, y]) => {
     const L = side === 'L';
     const sx = L ? CX + 22 : CX + CW - 86;
-    el(p, sx, y, 64, 82, { bg: '#17171B', border: '2px solid #34343C', radius: 14 });
+    el(g, sx, y, 64, 82, { bg: V('caixa2'), border: `2px solid ${V('borda')}`, radius: 14 });
     // faixas da esquerda pra direita: lado esquerdo = fora/meio/dentro; direito = dentro/meio/fora
-    const z = [0, 1, 2].map((k) => el(p, sx + 6 + k * 18, y + 7, 16, 68, { radius: 5, bg: '#00C853' }));
+    const z = [0, 1, 2].map((k) => el(g, sx + 6 + k * 18, y + 7, 16, 68, { radius: 5, bg: V('verde2') }));
     const zones = L ? z : z.slice().reverse(); // zones[0] = fora, [1] = meio, [2] = dentro
-    const temp = el(p, L ? CX + 98 : CX + CW - 238, y + 2, 140, 44, { size: 36, cls: L ? 'l' : 'r' });
-    const wbar = bar(p, L ? CX + 98 : CX + CW - 194, y + 58, 96, 10, '#00C853', '#26262C');
-    const wpct = el(p, L ? CX + 202 : CX + CW - 240, y + 48, 44, 30, { size: 17, cls: L ? 'l' : 'r' });
+    const temp = el(g, L ? CX + 98 : CX + CW - 238, y + 2, 140, 44, { size: 36, cls: L ? 'l' : 'r' });
+    const wbar = bar(g, L ? CX + 98 : CX + CW - 194, y + 58, 96, 10, V('verde2'));
+    const wpct = el(g, L ? CX + 202 : CX + CW - 240, y + 48, 44, 30, { size: 17, cls: L ? 'l' : 'r' });
     return { zones, temp, wbar, wpct };
   });
   const tcx = CX + Math.floor(CW / 2);
-  el(p, tcx - 46, 520, 92, 92, { bg: '#1B1B1F', border: '4px solid #2C2C32', radius: 46 });
-  E.cmpIcon = el(p, tcx - 40, 526, 80, 80, { size: 40, bg: '#101013', border: '9px solid #8E8E96', radius: 40 });
-  E.cmpTxt = el(p, CX + 230, 616, CW - 460, 34, { size: 22 });
-  E.bias = el(p, CX + 230, 654, CW - 460, 50, { size: 28, color: C.cyan });
+  el(g, tcx - 46, 520, 92, 92, { bg: V('caixa2'), border: `4px solid ${V('borda')}`, radius: 46 });
+  E.cmpIcon = el(g, tcx - 40, 526, 80, 80, { size: 40, bg: V('caixa'), border: `9px solid ${V('rotulo')}`, radius: 40 });
+  E.cmpTxt = el(g, CX + 230, 616, CW - 460, 34, { size: 22 });
+  E.bias = el(g, CX + 230, 654, CW - 460, 50, { size: 28, color: V('frio') });
 
-  tile(p, 'VOLTA ATUAL', RX, 50, RW, 104, C.white);
-  E.cur = el(p, RX, 76, RW, 74, { size: 54 });
-  tile(p, 'ULTIMA', RX, 162, RW, 96, C.yellow);
-  E.last = el(p, RX, 186, RW, 68, { size: 46 });
-  tile(p, 'MELHOR', RX, 266, RW, 96, C.purple);
-  E.best = el(p, RX, 290, RW, 68, { size: 46, color: C.purple });
-  tile(p, 'DANOS DO CARRO', RX, 370, RW, 342, C.red);
+  g = bloco(p, 'tempos');
+  tile(g, 'VOLTA ATUAL', RX, 50, RW, 104, V('forte'));
+  E.cur = el(g, RX, 76, RW, 74, { size: 54 });
+  tile(g, 'ULTIMA', RX, 162, RW, 96, V('amarelo2'));
+  E.last = el(g, RX, 186, RW, 68, { size: 46 });
+  tile(g, 'MELHOR', RX, 266, RW, 96, V('roxo'));
+  E.best = el(g, RX, 290, RW, 68, { size: 46, color: V('roxo') });
+  g = bloco(p, 'danos');
+  tile(g, 'DANOS DO CARRO', RX, 370, RW, 342, V('destaque'));
   E.dmg = [['ASA DIANT. E', 'fwl'], ['ASA DIANT. D', 'fwr'], ['ASA TRASEIRA', 'rw'], ['ASSOALHO', 'floor'],
     ['DIFUSOR', 'diff'], ['SIDEPOD', 'sidepod'], ['MOTOR', 'engine'], ['CAMBIO', 'gearbox']].map(([name, key], i) => {
     const y = 406 + i * 37;
-    el(p, RX + 16, y, 240, 34, { size: 18, cls: 'l', color: '#CFCFD6', weight: 500, text: name });
-    return { key, v: el(p, RX + RW - 116, y + 3, 100, 28, { size: 18, color: '#000', radius: 6 }) };
+    el(g, RX + 16, y, 240, 34, { size: 18, cls: 'l', color: V('texto2'), weight: 500, text: name });
+    return { key, v: el(g, RX + RW - 116, y + 3, 100, 28, { size: 18, color: V('tinta'), radius: 6 }) };
   });
 })();
 
@@ -286,24 +317,26 @@ E.msg.style.paddingLeft = '14px'; E.msg.style.display = 'none';
 (function () {
   const p = screens[1];
   const X = 8, Wd = 330;
-  tile(p, 'MARCHA', X, 50, Wd, 250, C.red);
+  tile(p, 'MARCHA', X, 50, Wd, 250, V('destaque'));
   E.gear2 = el(p, X, 62, Wd, 170, { size: 160, cls: 'gear' });
   E.speed2 = el(p, X, 234, Wd, 58, { size: 36 });
-  tile(p, 'DELTA', X, 308, Wd, 150, C.grey);
-  E.delta2 = el(p, X, 336, Wd, 116, { size: 64 });
-  tile(p, 'ERS', X, 466, Wd, 120, C.yellow);
-  E.ersPct2 = el(p, X + Wd - 200, 470, 186, 36, { size: 30, cls: 'r' });
-  E.ersBar2 = bar(p, X + 14, 516, Wd - 28, 54, '#FFD600');
-  tile(p, 'POSICAO / VOLTA', X, 594, Wd, 118, C.red);
+  let g = bloco(p, 'delta');
+  tile(g, 'DELTA', X, 308, Wd, 150, V('cinza'));
+  E.delta2 = el(g, X, 336, Wd, 116, { size: 64 });
+  g = bloco(p, 'ers');
+  tile(g, 'ERS', X, 466, Wd, 120, V('amarelo2'));
+  E.ersPct2 = el(g, X + Wd - 200, 470, 186, 36, { size: 30, cls: 'r' });
+  E.ersBar2 = bar(g, X + 14, 516, Wd - 28, 54, V('amarelo'));
+  tile(p, 'POSICAO / VOLTA', X, 594, Wd, 118, V('destaque'));
   E.posLap = el(p, X, 622, Wd, 84, { size: 40 });
 
   const CarX = 346, CarW = 868, cx = CarX + CarW / 2, carL = cx - 180, carT = 66;
-  tile(p, 'CARRO', CarX, 50, CarW, 662, C.dark);
+  tile(p, 'CARRO', CarX, 50, CarW, 662, V('borda'));
   // aneis de desgaste + pontilhado (atras do carro)
   E.rings = [[cx - 290, carT + 170, cx - 222, 76], [cx + 290, carT + 170, carL + 326, 76],
     [cx - 290, carT + 526, cx - 222, 68], [cx + 290, carT + 526, carL + 334, 68]].map(([rx, ry, dx, dw]) => {
-    el(p, dx, ry - 18, dw, 30, { size: 22, weight: 500, color: '#B0B0B8', text: '. . . . . .' });
-    return el(p, rx - 65, ry - 65, 130, 130, { size: 36, bg: '#000', border: '9px solid #2BE04F', radius: 65 });
+    el(p, dx, ry - 18, dw, 30, { size: 22, weight: 500, color: V('rotulo'), text: '. . . . . .' });
+    return el(p, rx - 65, ry - 65, 130, 130, { size: 36, bg: V('bloco'), border: '9px solid #2BE04F', radius: 65 });
   });
   const svg = svgFrom('carSvg', p, carL, carT);
   E.car = {};
@@ -314,7 +347,7 @@ E.msg.style.paddingLeft = '14px'; E.msg.style.display = 'none';
     const els = [];
     Array.from(g.querySelectorAll('path, rect')).forEach((e) => {
       const gap = e.cloneNode(true);
-      gap.setAttribute('fill', '#050506'); gap.setAttribute('stroke', '#050506');
+      gap.style.fill = V('bloco'); gap.style.stroke = V('bloco');
       gap.setAttribute('stroke-width', '12'); gap.setAttribute('stroke-linejoin', 'round');
       g.insertBefore(gap, e);
       e.setAttribute('fill-opacity', floor ? '0.22' : '0.62');
@@ -331,13 +364,13 @@ E.msg.style.paddingLeft = '14px'; E.msg.style.display = 'none';
     e.setAttribute('stroke', '#8A8A92'); e.setAttribute('stroke-width', line ? '6' : '4');
     e.setAttribute('stroke-linejoin', 'round'); e.setAttribute('stroke-linecap', 'round');
   });
-  E.wFL = el(p, carL + 26, carT + 40, 150, 40, { size: 16 });
-  E.wFR = el(p, carL + 184, carT + 40, 150, 40, { size: 16 });
-  E.wR = el(p, carL + 98, carT + 592, 164, 32, { size: 14 });
+  E.wFL = el(p, carL + 26, carT + 40, 150, 40, { size: 16, color: '#FFFFFF' });
+  E.wFR = el(p, carL + 184, carT + 40, 150, 40, { size: 16, color: '#FFFFFF' });
+  E.wR = el(p, carL + 98, carT + 592, 164, 32, { size: 14, color: '#FFFFFF' });
   E.tbox = [[carL + 31, carT + 228], [carL + 253, carT + 228], [carL - 10, carT + 586], [carL + 294, carT + 586]]
-    .map(([x, y]) => el(p, x, y, 76, 46, { size: 28, border: '2px solid #fff', radius: 4, bg: '#1E4FD8' }));
+    .map(([x, y]) => el(p, x, y, 76, 46, { size: 28, color: '#FFFFFF', border: '2px solid #fff', radius: 4, bg: '#1E4FD8' }));
   const call = (x, y, label, key, right) => {
-    el(p, x, y, 150, 22, { size: 15, color: C.label, cls: right ? 'r' : 'l', text: label });
+    el(p, x, y, 150, 22, { size: 15, color: V('rotulo'), cls: right ? 'r' : 'l', text: label });
     return { key, v: el(p, x, y + 22, 150, 36, { size: 30, cls: right ? 'r' : 'l' }) };
   };
   E.calls = [call(CarX + 16, 330, 'SIDEPOD', 'sidepod'), call(CarX + 16, 410, 'MOTOR', 'engine'),
@@ -345,17 +378,21 @@ E.msg.style.paddingLeft = '14px'; E.msg.style.display = 'none';
     call(CarX + CarW - 166, 490, 'DIFUSOR', 'diff', 1)];
 
   const PX = 1222, PW = 330;
-  tile(p, 'DESGASTE DO MOTOR', PX, 50, PW, 300, C.orange);
+  g = bloco(p, 'motor');
+  tile(g, 'DESGASTE DO MOTOR', PX, 50, PW, 300, V('laranja'));
   E.eng = [['ICE', 'ice'], ['MGU-H', 'mguh'], ['MGU-K', 'mguk'], ['BATERIA', 'es'], ['CENTRAL', 'ce'], ['TURBO', 'tc']].map(([n, key], i) => {
     const ey = 90 + i * 42;
-    el(p, PX + 14, ey, 110, 34, { size: 16, cls: 'l', color: '#CFCFD6', weight: 500, text: n });
-    return { key, bar: bar(p, PX + 124, ey + 11, 130, 12, '#2BE04F'), v: el(p, PX + 258, ey, 60, 34, { size: 18, cls: 'r' }) };
+    el(g, PX + 14, ey, 110, 34, { size: 16, cls: 'l', color: V('texto2'), weight: 500, text: n });
+    return { key, bar: bar(g, PX + 124, ey + 11, 130, 12, '#2BE04F'), v: el(g, PX + 258, ey, 60, 34, { size: 18, cls: 'r' }) };
   });
   const cells = [['DE', 0, 0], ['DD', 1, 0], ['TE', 0, 1], ['TD', 1, 1]];
-  tile(p, 'FREIOS', PX, 358, PW, 170, C.red);
-  E.brakes = cells.map(([n, c, r]) => ({ n, v: el(p, PX + 12 + c * 155, 392 + r * 66, 151, 58, { size: 22, bg: '#16161B', border: '2px solid #2A2A30', radius: 8 }) }));
-  tile(p, 'PRESSAO PNEUS (PSI)', PX, 536, PW, 176, C.cyan);
-  E.press = cells.map(([n, c, r]) => ({ n, v: el(p, PX + 12 + c * 155, 572 + r * 66, 151, 58, { size: 22, color: C.cyan, bg: '#16161B', border: '2px solid #2A2A30', radius: 8 }) }));
+  const cellOpts = (extra) => Object.assign({ size: 22, bg: V('caixa'), border: `2px solid ${V('borda')}`, radius: 8 }, extra);
+  g = bloco(p, 'freios');
+  tile(g, 'FREIOS', PX, 358, PW, 170, V('destaque'));
+  E.brakes = cells.map(([n, c, r]) => ({ n, v: el(g, PX + 12 + c * 155, 392 + r * 66, 151, 58, cellOpts()) }));
+  g = bloco(p, 'pressao');
+  tile(g, 'PRESSAO PNEUS (PSI)', PX, 536, PW, 176, V('frio'));
+  E.press = cells.map(([n, c, r]) => ({ n, v: el(g, PX + 12 + c * 155, 572 + r * 66, 151, 58, cellOpts({ color: V('frio') })) }));
 })();
 
 function setPart(name, lv) {
@@ -367,29 +404,33 @@ function setPart(name, lv) {
 // ---------- TELA 3: INFO ----------
 (function () {
   const p = screens[2];
-  tile(p, 'VOLTAS RESTANTES', 8, 50, 380, 250, C.white);
-  E.lapsLeft = el(p, 8, 80, 380, 160, { size: 130 });
-  E.lapsSub = el(p, 8, 244, 380, 40, { size: 24, color: C.label });
-  tile(p, 'SE PARAR AGORA, VOLTA EM', 396, 50, 380, 250, C.cyan);
-  E.rejoin = el(p, 396, 80, 380, 160, { size: 130 });
-  E.rejoinSub = el(p, 396, 244, 380, 40, { size: 24, color: C.label });
-  tile(p, 'SETORES', 784, 50, 768, 250, C.purple);
-  el(p, 798, 120, 130, 76, { size: 20, cls: 'l', color: C.label, text: 'ULTIMA' });
-  el(p, 798, 206, 130, 76, { size: 20, cls: 'l', color: C.label, text: 'MELHOR' });
+  let g = bloco(p, 'restantes');
+  tile(g, 'VOLTAS RESTANTES', 8, 50, 380, 250, V('forte'));
+  E.lapsLeft = el(g, 8, 80, 380, 160, { size: 130 });
+  E.lapsSub = el(g, 8, 244, 380, 40, { size: 24, color: V('rotulo') });
+  g = bloco(p, 'parada');
+  tile(g, 'SE PARAR AGORA, VOLTA EM', 396, 50, 380, 250, V('frio'));
+  E.rejoin = el(g, 396, 80, 380, 160, { size: 130 });
+  E.rejoinSub = el(g, 396, 244, 380, 40, { size: 24, color: V('rotulo') });
+  g = bloco(p, 'setores');
+  tile(g, 'SETORES', 784, 50, 768, 250, V('roxo'));
+  el(g, 798, 120, 130, 76, { size: 20, cls: 'l', color: V('rotulo'), text: 'ULTIMA' });
+  el(g, 798, 206, 130, 76, { size: 20, cls: 'l', color: V('rotulo'), text: 'MELHOR' });
   E.secs = [0, 1, 2].map((k) => {
     const sx = 936 + k * 204;
-    el(p, sx, 84, 196, 30, { size: 22, color: '#CFCFD6', text: 'S' + (k + 1) });
-    const box = { size: 36, bg: '#101014', border: '2px solid #2A2A30', radius: 10 };
-    return { last: el(p, sx, 120, 196, 76, box), best: el(p, sx, 206, 196, 76, Object.assign({ color: C.purple }, box)) };
+    el(g, sx, 84, 196, 30, { size: 22, color: V('texto2'), text: 'S' + (k + 1) });
+    const box = () => ({ size: 36, bg: V('caixa'), border: `2px solid ${V('borda')}`, radius: 10 });
+    return { last: el(g, sx, 120, 196, 76, box()), best: el(g, sx, 206, 196, 76, Object.assign(box(), { color: V('roxo') })) };
   });
-  tile(p, 'CLIMA', 8, 308, 1544, 404, C.cyan);
-  E.wxTemps = el(p, 1000, 312, 538, 30, { size: 20, cls: 'r', color: '#CFCFD6' });
+  g = bloco(p, 'clima');
+  tile(g, 'CLIMA', 8, 308, 1544, 404, V('frio'));
+  E.wxTemps = el(g, 1000, 312, 538, 30, { size: 20, cls: 'r', color: V('texto2') });
   E.wx = ['AGORA', '5 MIN', '15 MIN', '30 MIN'].map((when, k) => {
     const x = 24 + k * 382;
-    el(p, x, 350, 366, 346, { bg: '#101014', border: '2px solid #2A2A30', radius: 16 });
-    el(p, x, 360, 366, 44, { size: 32, text: when });
-    const icon = svgFrom('wxSvg', p, x + 108, 408);
-    return { icon, w: -2, name: el(p, x, 566, 366, 40, { size: 26, color: '#CFCFD6' }), rain: el(p, x, 614, 366, 60, { size: 40 }) };
+    el(g, x, 350, 366, 346, { bg: V('caixa'), border: `2px solid ${V('borda')}`, radius: 16 });
+    el(g, x, 360, 366, 44, { size: 32, text: when });
+    const icon = svgFrom('wxSvg', g, x + 108, 408);
+    return { icon, w: -2, name: el(g, x, 566, 366, 40, { size: 26, color: V('texto2') }), rain: el(g, x, 614, 366, 60, { size: 40 }) };
   });
 })();
 
@@ -399,45 +440,120 @@ E.popT1 = el(pop, 0, 0, 10, 10, { color: '#000' });
 E.popT2 = el(pop, 0, 0, 10, 10, { color: '#000' });
 E.popBand = el(pop, 0, 0, 10, 10, { bg: '#000', color: '#fff' });
 
-// ================= TROCA DE TELA =================
-let cur = 0;
-try { cur = Math.min(2, Math.max(0, parseInt(localStorage.getItem('tela') || '0', 10) || 0)); } catch (e) {}
+// ================= TELAS =================
+const ATIVA = () => [CFG.telas.corrida, CFG.telas.carro, CFG.telas.info];
+let cur = -1;
 function show(k) {
+  const on = ATIVA();
+  if (!on[k]) k = on.indexOf(true);
+  if (k === cur) return;
   cur = k;
   screens.forEach((s, i) => s.classList.toggle('on', i === k));
-  E.menu.forEach((s, i) => {
-    const on = i === k, fg = on ? '#FFFFFF' : '#B8B8C2';
-    const bg = s.querySelector('.bg');
-    bg.setAttribute('fill', on ? '#E10600' : '#16161B'); bg.setAttribute('stroke', on ? '#FF5A4D' : '#3A3A44');
-    const g = s.querySelector('.i' + i); g.setAttribute('stroke', fg);
-    g.querySelectorAll('.fillme').forEach((e) => e.setAttribute('fill', fg));
-    g.querySelectorAll('.strokeme').forEach((e) => e.setAttribute('stroke', fg));
-  });
-  try { localStorage.setItem('tela', String(k)); } catch (e) {}
+  pintarMenu();
 }
-show(cur);
+function pintarMenu() {
+  const on = ATIVA();
+  let pos = 0;
+  E.menu.forEach((s, i) => {
+    s.style.display = on[i] ? '' : 'none';
+    if (on[i]) { s.style.left = (8 + pos * 64) + 'px'; pos++; }
+    const ativo = i === cur;
+    const bg = s.querySelector('.bg');
+    bg.style.fill = ativo ? V('destaque') : V('caixa2');
+    bg.style.stroke = ativo ? 'rgba(255,255,255,.35)' : V('borda');
+    const fg = ativo ? '#FFFFFF' : V('rotulo');
+    const g = s.querySelector('.i' + i); g.style.stroke = fg;
+    g.querySelectorAll('.fillme').forEach((e) => { e.style.fill = fg; });
+    g.querySelectorAll('.strokeme').forEach((e) => { e.style.stroke = fg; });
+  });
+}
+function passo(dir) {
+  const on = ATIVA();
+  for (let i = 1; i <= 3; i++) { const k = (cur + dir * i + 3) % 3; if (on[k]) return show(k); }
+}
+
+// ================= APLICA A CONFIG (na hora, sem recarregar) =================
+let ledCores = [];
+let primeiraConfig = true;
+function aplicarConfig(c) {
+  CFG = c;
+  TH = coresDoTema(c.tema, c.destaque);
+  for (const k in TH) stage.style.setProperty('--' + k, TH[k]);
+  document.body.style.background = TH.fundo;
+  const est = (LEDS[c.leds] || LEDS.classico).cores;
+  ledCores = Array.from({ length: 15 }, (_, i) => V(est[i < 5 ? 0 : i < 10 ? 1 : 2]));
+  for (const nome in BLOCOS) BLOCOS[nome].forEach((g) => { g.style.display = c.blocos[nome] === false ? 'none' : ''; });
+  if (primeiraConfig) { primeiraConfig = false; cur = -1; show(c.telaInicial); }
+  else if (!ATIVA()[cur]) show(cur); else pintarMenu();
+}
+aplicarConfig(CFG); primeiraConfig = true;
 
 // ================= ESCALA (cabe na tela, sem distorcer) =================
-function fit() {
+function ajustar() {
   const vw = window.innerWidth, vh = window.innerHeight;
   const s = Math.min(vw / 1560, vh / 720);
   stage.style.transform = `translate(${(vw - 1560 * s) / 2}px, ${(vh - 720 * s) / 2}px) scale(${s})`;
 }
-window.addEventListener('resize', fit);
-window.addEventListener('orientationchange', () => setTimeout(fit, 300));
-fit();
+window.addEventListener('resize', ajustar);
+window.addEventListener('orientationchange', () => setTimeout(ajustar, 300));
+ajustar();
+
+// ================= SOM DOS AVISOS =================
+let audio = null;
+document.addEventListener('pointerdown', () => { // o iPhone so libera som depois de um toque
+  try { if (!audio) audio = new (window.AudioContext || window.webkitAudioContext)(); if (audio.state === 'suspended') audio.resume(); } catch (e) {}
+});
+function bip() {
+  if (!audio || PREVIA) return;
+  try {
+    const t = audio.currentTime;
+    [0, 0.18].forEach((d) => {
+      const o = audio.createOscillator(), g = audio.createGain();
+      o.frequency.value = 880; o.connect(g); g.connect(audio.destination);
+      g.gain.setValueAtTime(0.0001, t + d); g.gain.exponentialRampToValueAtTime(0.4, t + d + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + d + 0.14);
+      o.start(t + d); o.stop(t + d + 0.15);
+    });
+  } catch (e) {}
+}
 
 // ================= CONEXAO =================
 let S = null, connected = false, ws = null;
 function connect() {
-  ws = new WebSocket(`ws://${location.host}/ws`);
+  ws = new WebSocket(`ws://${location.host}/ws${PREVIA ? '?previa=1' : ''}`);
   ws.onopen = () => { connected = true; };
-  ws.onmessage = (ev) => { S = JSON.parse(ev.data); };
+  ws.onmessage = (ev) => {
+    const m = JSON.parse(ev.data);
+    if (m.tipo === 'config') aplicarConfig(m.config);
+    else if (m.tipo === 'tela') { if (!PREVIA) passo(m.acao === 'anterior' ? -1 : 1); }
+    else S = m;
+  };
   ws.onclose = () => { connected = false; ws = null; setTimeout(connect, 1000); };
   ws.onerror = () => { try { ws.close(); } catch (e) {} };
 }
 connect();
 document.addEventListener('visibilitychange', () => { if (!document.hidden && !ws) connect(); });
+
+// ---- miniatura do app: dados de exemplo e testes de aviso ----
+const DEMO = {
+  ok: true, fmt: 2025, pos: 4, lap: 23, totalLaps: 57, gap: 1.482, delta: -0.231, curLap: 62418, lastLap: 91904, bestLap: 91904,
+  invalid: false, sector: 1, warnings: 1, penalties: 0, dt: 0, sg: 0, pitStatus: 0, stops: 0, laneMs: 0, stopMs: 0,
+  speed: 287, gear: 6, rpm: 11000, revPct: 60, drs: 0, brakeT: [1040, 860, 410, 280], tyreSurf: [98, 108, 92, 76],
+  tyreInner: [101, 112, 95, 80], press: [22.6, 22.8, 20.4, 20.5], bias: 56, limiter: 0, drsAllowed: 0, drsDist: 140,
+  compound: 17, tyreAge: 18, fia: 0, ers: 68, ersMode: 1, ersUsed: 41, reg26: 0, aeroMode: 0, aeroAvail: 0, aeroDist: 0,
+  otAvail: 0, otActive: 0, otDist: 0, wear: [31, 36, 24, 56], fwl: 12, fwr: 27, rw: 0, floor: 4, diff: 0, sidepod: 0,
+  drsFault: 0, gearbox: 0, engine: 18, ice: 38, mguh: 22, mguk: 65, es: 30, ce: 12, tc: 41, weather: 1, air: 24, track: 38,
+  sessionType: 15, sc: 0, red: false, pitIdeal: 24, pitLatest: 29, rejoin: 8, rainNow: 10,
+  forecast: [{ w: 1, rain: 10 }, { w: 2, rain: 30 }, { w: 3, rain: 60 }], scDelta: 0,
+  secLast: [28.412, 28.412, 28.412], secBest: [28.105, 28.105, 28.105],
+};
+let teste = null; // { s: {campos}, ate: ms }
+const TESTES = { vermelha: { red: true }, amarela: { fia: 3 }, azul: { fia: 2 }, verde: { fia: 1 }, sc: { sc: 1 }, vsc: { sc: 2 }, formacao: { sc: 3 } };
+window.addEventListener('message', (ev) => {
+  const m = ev.data || {};
+  if (m.tipo === 'aviso' && TESTES[m.qual]) teste = { s: TESTES[m.qual], ate: performance.now() + (CFG.avisos.duracao * 1000) + 300 };
+  if (m.tipo === 'tela') show(m.idx);
+});
 
 // ================= FORMATOS =================
 const lapFmt = (ms) => {
@@ -453,6 +569,7 @@ const secFmt = (x) => {
 };
 const gearTxt = (g) => g < 0 ? 'R' : g === 0 ? 'N' : String(g);
 const hx = (v) => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0');
+const rgb = (h) => [1, 3, 5].map((i) => parseInt(h.substr(i, 2), 16));
 const mixHex = (a, b, k) => '#' + hx(a[0] + (b[0] - a[0]) * k) + hx(a[1] + (b[1] - a[1]) * k) + hx(a[2] + (b[2] - a[2]) * k);
 
 // ================= DESENHO (todo quadro) =================
@@ -460,30 +577,31 @@ const G = { last: null, t: 0, dir: 0 };     // animacao da marcha
 const PK = { key: '', t: 0 };                // aviso
 function frame(now) {
   requestAnimationFrame(frame);
-  const s = S;
-  // mensagem quando nao tem dado
-  // so avisa se perder a conexao com o PC (sem a faixa de "aguardando o jogo")
-  const msg = !connected ? 'SEM CONEXAO COM O PC' : '';
+  const msg = !connected && !PREVIA ? 'SEM CONEXAO COM O PC  ·  o app F1 25 Rafa Pro esta aberto?' : '';
   T(E.msg, msg); P(E.msg, 'display', msg ? 'flex' : 'none');
+  let s = S;
+  if (PREVIA && (!s || !s.ok)) s = DEMO;
+  if (teste) { if (now > teste.ate) teste = null; else s = Object.assign({}, s || DEMO, teste.s); }
   if (!s) return;
+  const AV = CFG.avisos;
 
-  // ---- fundo: pulsa com bandeira / safety car ----
+  // ---- fundo: pulsa com bandeira / safety car (so os tipos ligados no app) ----
   const k = 0.5 + 0.5 * Math.sin((now % 1400) / 1400 * 2 * Math.PI);
-  let bg = '#050506';
-  if (s.red) bg = mixHex([230, 0, 0], [100, 0, 0], k);
-  else if (s.sc === 1) bg = mixHex([255, 196, 0], [150, 105, 0], k);
-  else if (s.sc === 2) bg = mixHex([255, 140, 0], [110, 55, 0], k);
-  else if (s.sc === 3) bg = mixHex([142, 36, 170], [60, 15, 75], k);
-  else if (s.fia === 3) bg = mixHex([230, 180, 0], [120, 90, 0], k);
-  else if (s.fia === 2) bg = mixHex([0, 90, 255], [0, 35, 120], k);
-  else if (s.fia === 1) bg = mixHex([0, 200, 80], [0, 70, 30], k);
+  let bg = V('fundo');
+  if (s.red && AV.vermelha) bg = mixHex([230, 0, 0], [100, 0, 0], k);
+  else if (s.sc === 1 && AV.sc) bg = mixHex([255, 196, 0], [150, 105, 0], k);
+  else if (s.sc === 2 && AV.vsc) bg = mixHex([255, 140, 0], [110, 55, 0], k);
+  else if (s.sc === 3 && AV.formacao) bg = mixHex([142, 36, 170], [60, 15, 75], k);
+  else if (s.fia === 3 && AV.amarela) bg = mixHex([230, 180, 0], [120, 90, 0], k);
+  else if (s.fia === 2 && AV.azul) bg = mixHex([0, 90, 255], [0, 35, 120], k);
+  else if (s.fia === 1 && AV.verde) bg = mixHex([0, 200, 80], [0, 70, 30], k);
   P(stage, 'background', bg);
 
   // ---- LEDs de RPM ----
   const rp = s.revPct || 0;
   const blinkOn = Math.floor(now / 90) % 2 === 0;
   for (let i = 0; i < 15; i++) {
-    const c = rp >= 99 ? (blinkOn ? '#4FC3F7' : '#141418') : (rp * 15 / 100 > i ? LEDC[i] : '#19191E');
+    const c = rp >= 99 ? (blinkOn ? V('ledshift') : V('ledoff')) : (rp * 15 / 100 > i ? ledCores[i] : V('ledoff'));
     P(E.leds[i], 'background', c);
   }
 
@@ -491,16 +609,17 @@ function frame(now) {
   if (G.last === null) G.last = s.gear;
   if (s.gear !== G.last) { G.dir = s.gear > G.last ? 1 : -1; G.last = s.gear; G.t = now; }
   const gk = Math.min(1, (now - G.t) / 260), ge = 1 - Math.pow(1 - gk, 3);
-  const gScale = (gk >= 1 || !G.dir) ? 1 : (G.dir > 0 ? 0.72 : 1.15) + (1 - (G.dir > 0 ? 0.72 : 1.15)) * ge;
-  let gCol = '#FFFFFF';
-  if (rp >= 97) gCol = '#FF1744';
-  else if (gk < 1 && G.dir) gCol = mixHex(G.dir > 0 ? [0, 230, 118] : [255, 140, 0], [255, 255, 255], ge);
+  const s0 = G.dir > 0 ? 0.72 : 1.15;
+  const gScale = (gk >= 1 || !G.dir) ? 1 : s0 + (1 - s0) * ge;
+  let gCol = V('texto');
+  if (rp >= 97) gCol = V('vermelho');
+  else if (gk < 1 && G.dir) gCol = mixHex(G.dir > 0 ? [0, 230, 118] : [255, 140, 0], rgb(TH.texto), ge);
   const gEl = cur === 0 ? E.gear1 : cur === 1 ? E.gear2 : null;
   if (gEl) { T(gEl, gearTxt(s.gear)); P(gEl, 'color', gCol); P(gEl, 'transform', `scale(${gScale.toFixed(3)})`); }
 
   // valores comuns
   const deltaTxt = s.delta == null ? '+0.000' : (s.delta >= 0 ? '+' : '-') + Math.abs(s.delta).toFixed(3);
-  const deltaCol = (s.delta == null || Math.abs(s.delta) < 0.0005) ? '#FFFFFF' : s.delta < 0 ? C.green : '#FF3B30';
+  const deltaCol = (s.delta == null || Math.abs(s.delta) < 0.0005) ? V('texto') : s.delta < 0 ? V('verde') : V('vermelho2');
   const ers = Math.max(0, Math.min(100, s.ers || 0)), low = ers < 10;
   const lapStr = s.lap + '/' + s.totalLaps;
 
@@ -509,12 +628,7 @@ function frame(now) {
     T(E.lap, lapStr);
     T(E.delta, deltaTxt); P(E.delta, 'color', deltaCol);
     T(E.gap, s.pos === 1 ? 'LIDER' : '+' + (s.gap || 0).toFixed(3));
-    // DRS
-    const drsSt = s.drsFault ? 2 : s.drs === 1 ? 1 : 0;
-    T(E.drs, ['DRS', 'DRS ABERTO', 'DRS FALHA'][drsSt]);
-    P(E.drs, 'background', ['#000000', '#00E676', '#4A0000'][drsSt]);
-    P(E.drs, 'color', ['#3A3A42', '#000000', '#FF3B30'][drsSt]);
-    P(E.drs, 'borderColor', ['#2A2A30', '#00E676', '#FF3B30'][drsSt]);
+    desenharDrs(s);
     // BOX
     const ps = s.pitStatus, lane = ps > 0, lim = s.limiter === 1, blink = Math.floor(now / 300) % 2 === 0;
     const inWin = s.pitIdeal > 0 && s.lap >= s.pitIdeal && s.lap <= s.pitLatest && !lane;
@@ -526,25 +640,25 @@ function frame(now) {
     else if (lim) { bt = 'LIMITADOR'; bb = blink ? '#2979FF' : '#0D2A66'; }
     else if (lane) { bt = 'PIT LANE'; bb = '#0D2A66'; }
     else if (inWin) { bt = 'BOX BOX'; bb = blink ? '#00838F' : '#003C42'; }
-    else { bt = 'BOX'; bb = '#000000'; }
+    else { bt = 'BOX'; bb = V('bloco'); }
     if (ps === 1 && laneT < 4 && !noLim) bc = blink ? '#FFFFFF' : '#0D2A66';
-    else bc = (lim || lane || inWin) ? '#FFFFFF' : '#3A3A42';
-    bd = noLim ? '#FF1744' : inWin ? '#00E5FF' : (lim || lane) ? '#2979FF' : '#2A2A30';
+    else bc = (lim || lane || inWin) ? '#FFFFFF' : V('apagado');
+    bd = noLim ? '#FF1744' : inWin ? '#00E5FF' : (lim || lane) ? '#2979FF' : V('borda');
     T(E.box, bt); P(E.box, 'background', bb); P(E.box, 'color', bc); P(E.box, 'borderColor', bd);
     T(E.boxSub, ps === 2 ? 'PARADA ' + (s.stopMs / 1000).toFixed(1) + 's'
       : lane ? 'NO PIT ' + laneT.toFixed(1) + 's'
       : (s.pitIdeal > 0 ? 'JANELA V' + s.pitIdeal + '-' + s.pitLatest : 'JANELA --') + '   PARADAS ' + s.stops);
-    P(E.boxSub, 'color', lane ? '#FFFFFF' : C.label);
+    P(E.boxSub, 'color', lane ? '#FFFFFF' : V('rotulo'));
     // ERS (amarelo, sem piscar)
-    T(E.ersPct, Math.round(ers) + '%'); P(E.ersPct, 'color', low ? '#FF1744' : '#FFFFFF');
+    T(E.ersPct, Math.round(ers) + '%'); P(E.ersPct, 'color', low ? V('vermelho') : V('texto'));
     P(E.ersBar, 'width', ers.toFixed(1) + '%');
     T(E.ersMode, low ? 'BATERIA BAIXA' : ['NENHUM', 'MEDIO', 'HOTLAP', 'ULTRAPASSAGEM'][s.ersMode] || 'NENHUM');
-    P(E.ersMode, 'color', low ? '#FF1744' : '#FFD600');
+    P(E.ersMode, 'color', low ? V('vermelho') : V('amarelo'));
     T(E.ersUsed, 'USADO NA VOLTA ' + Math.round(s.ersUsed || 0) + '%');
     // marcha
-    T(E.speed1, s.speed + ' KM/H');
+    T(E.speed1, vel(s.speed));
     T(E.warn, 'AVISOS ' + s.warnings);
-    P(E.warn, 'color', s.warnings >= 3 ? '#FF1744' : s.warnings >= 1 ? '#FFC400' : C.label);
+    P(E.warn, 'color', s.warnings >= 3 ? V('vermelho') : s.warnings >= 1 ? V('amarelo2') : V('rotulo'));
     T(E.pen, s.dt > 0 ? 'DRIVE THROUGH' : s.sg > 0 ? 'STOP & GO' : s.penalties > 0 ? 'PENAL +' + s.penalties + 's' : '');
     // pneus: fora = superficie, meio = media, dentro = carcaca
     E.tyres.forEach((t, i) => {
@@ -552,24 +666,24 @@ function frame(now) {
       P(t.zones[0], 'background', tempCol(surf));
       P(t.zones[1], 'background', tempCol((surf + inner) / 2));
       P(t.zones[2], 'background', tempCol(inner));
-      T(t.temp, surf + DEG); P(t.temp, 'color', tempCol(surf));
+      T(t.temp, tmp(surf) + DEG); P(t.temp, 'color', tempCol(surf));
       P(t.wbar, 'width', Math.max(0, 100 - w).toFixed(1) + '%'); P(t.wbar, 'background', wearCol(w));
       T(t.wpct, Math.round(w) + '%'); P(t.wpct, 'color', wearCol(w));
     });
-    const cmp = CMP[s.compound] || ['?', '---', '#8E8E96'];
+    const cmp = CMP[s.compound] || ['?', '---', V('rotulo')];
     T(E.cmpIcon, cmp[0]); P(E.cmpIcon, 'color', cmp[2]); P(E.cmpIcon, 'borderColor', cmp[2]);
     T(E.cmpTxt, cmp[1] + ' ' + s.tyreAge + ' VOLTAS'); P(E.cmpTxt, 'color', cmp[2]);
     T(E.bias, 'BB ' + (s.bias || 0).toFixed(1));
     // tempos
-    T(E.cur, lapFmt(s.curLap)); P(E.cur, 'color', s.invalid ? '#FF1744' : '#FFFFFF');
+    T(E.cur, lapFmt(s.curLap)); P(E.cur, 'color', s.invalid ? V('vermelho') : V('texto'));
     T(E.last, lapFmt(s.lastLap));
-    P(E.last, 'color', s.bestLap > 0 && s.lastLap === s.bestLap ? C.purple : '#FFFFFF');
+    P(E.last, 'color', s.bestLap > 0 && s.lastLap === s.bestLap ? V('roxo') : V('texto'));
     T(E.best, lapFmt(s.bestLap));
     E.dmg.forEach((d) => { const v = s[d.key] || 0; T(d.v, v + '%'); P(d.v, 'background', listCol(v)); });
   } else if (cur === 1) {
-    T(E.speed2, s.speed + ' KM/H');
+    T(E.speed2, vel(s.speed));
     T(E.delta2, deltaTxt); P(E.delta2, 'color', deltaCol);
-    T(E.ersPct2, Math.round(ers) + '%'); P(E.ersPct2, 'color', low ? '#FF1744' : '#FFFFFF');
+    T(E.ersPct2, Math.round(ers) + '%'); P(E.ersPct2, 'color', low ? V('vermelho') : V('texto'));
     P(E.ersBar2, 'width', ers.toFixed(1) + '%');
     T(E.posLap, 'P' + s.pos + '   ' + lapStr);
     // carro: pecas mudam de cor pelo dano, pneus pelo desgaste
@@ -579,29 +693,29 @@ function frame(now) {
     ['TyreFL', 'TyreFR', 'TyreRL', 'TyreRR'].forEach((n, i) => setPart(n, lvl(s.wear[i], WEAR)));
     T(E.wFL, 'ASA E ' + s.fwl + '%'); T(E.wFR, 'ASA D ' + s.fwr + '%'); T(E.wR, 'ASA TRAS. ' + s.rw + '%');
     E.rings.forEach((r, i) => { T(r, Math.round(s.wear[i]) + '%'); P(r, 'borderColor', NEON[lvl(s.wear[i], WEAR)]); });
-    E.tbox.forEach((b, i) => { T(b, String(s.tyreSurf[i])); P(b, 'background', tempBg(s.tyreSurf[i])); });
+    E.tbox.forEach((b, i) => { T(b, String(tmp(s.tyreSurf[i]))); P(b, 'background', tempBg(s.tyreSurf[i])); });
     E.calls.forEach((c) => { const v = s[c.key] || 0; T(c.v, v + '%'); P(c.v, 'color', NEON[lvl(v, DMG)]); });
     E.eng.forEach((e) => {
       const v = s[e.key] || 0, col = NEON[lvl(v, DMG)];
       P(e.bar, 'width', Math.min(100, v) + '%'); P(e.bar, 'background', col);
       T(e.v, v + '%'); P(e.v, 'color', col);
     });
-    E.brakes.forEach((b, i) => { T(b.v, b.n + ' ' + s.brakeT[i] + DEG); P(b.v, 'color', brakeCol(s.brakeT[i])); });
+    E.brakes.forEach((b, i) => { T(b.v, b.n + ' ' + tmp(s.brakeT[i]) + DEG); P(b.v, 'color', brakeCol(s.brakeT[i])); });
     E.press.forEach((b, i) => T(b.v, b.n + ' ' + (s.press[i] || 0).toFixed(1)));
-  } else {
+  } else if (cur === 2) {
     T(E.lapsLeft, String(Math.max(0, s.totalLaps - s.lap + 1)));
     T(E.lapsSub, 'VOLTA ' + lapStr);
     const r = s.rejoin;
     T(E.rejoin, r > 0 ? 'P' + r : '--');
-    P(E.rejoin, 'color', r <= 0 ? C.label : r <= s.pos + 1 ? C.green : r <= s.pos + 4 ? '#FFD600' : '#FF5A4D');
+    P(E.rejoin, 'color', r <= 0 ? V('rotulo') : r <= s.pos + 1 ? V('verde') : r <= s.pos + 4 ? V('amarelo') : V('vermelho2'));
     T(E.rejoinSub, 'VOCE ESTA EM P' + s.pos);
     E.secs.forEach((x, i) => {
       const last = s.secLast[i], best = s.secBest[i];
       T(x.last, secFmt(last));
-      P(x.last, 'color', !(last > 0) ? C.label : (best > 0 && last <= best + 0.0005) ? C.green : '#FFD600');
+      P(x.last, 'color', !(last > 0) ? V('rotulo') : (best > 0 && last <= best + 0.0005) ? V('verde') : V('amarelo'));
       T(x.best, secFmt(best));
     });
-    T(E.wxTemps, 'AR ' + s.air + DEG + '   PISTA ' + s.track + DEG);
+    T(E.wxTemps, 'AR ' + tmp(s.air) + DEG + '   PISTA ' + tmp(s.track) + DEG);
     E.wx.forEach((c, i) => {
       const f = i === 0 ? null : s.forecast[i - 1];
       const w = i === 0 ? s.weather : f ? f.w : null;
@@ -618,27 +732,28 @@ function frame(now) {
       }
       T(c.name, w == null ? '--' : WX[w] || '--');
       T(c.rain, rain == null ? 'CHUVA --' : 'CHUVA ' + rain + '%');
-      P(c.rain, 'color', rain == null ? C.label : rain >= 50 ? '#2F8BFF' : rain >= 20 ? '#4FA8FF' : '#CFCFD6');
+      P(c.rain, 'color', rain == null ? V('rotulo') : rain >= 50 ? '#2F8BFF' : rain >= 20 ? '#4FA8FF' : V('texto2'));
     });
   }
 
   // ---- aviso por cima de tudo ----
   let t1 = '', t2 = '', sub = '', pbg = '#FFD600', fg = '#000000', full = false;
-  if (s.red) { t1 = 'BANDEIRA'; t2 = 'VERMELHA'; pbg = '#FF0000'; full = true; }
-  else if (s.sc === 1) { t1 = 'SAFETY CAR'; }
-  else if (s.sc === 2) { t1 = 'VIRTUAL'; t2 = 'SAFETY CAR'; }
-  else if (s.sc === 3) { t1 = 'VOLTA DE'; t2 = 'FORMACAO'; pbg = '#8E24AA'; fg = '#FFFFFF'; }
-  else if (s.fia === 3) { t1 = 'BANDEIRA'; t2 = 'AMARELA'; sub = 'SETOR ' + (s.sector + 1); full = true; }
-  else if (s.fia === 2) { t1 = 'BANDEIRA'; t2 = 'AZUL'; pbg = '#2979FF'; fg = '#FFFFFF'; }
-  else if (s.fia === 1) { t1 = 'BANDEIRA'; t2 = 'VERDE'; pbg = '#00C853'; }
+  if (s.red && AV.vermelha) { t1 = 'BANDEIRA'; t2 = 'VERMELHA'; pbg = '#FF0000'; full = true; }
+  else if (s.sc === 1 && AV.sc) { t1 = 'SAFETY CAR'; }
+  else if (s.sc === 2 && AV.vsc) { t1 = 'VIRTUAL'; t2 = 'SAFETY CAR'; }
+  else if (s.sc === 3 && AV.formacao) { t1 = 'VOLTA DE'; t2 = 'FORMACAO'; pbg = '#8E24AA'; fg = '#FFFFFF'; }
+  else if (s.fia === 3 && AV.amarela) { t1 = 'BANDEIRA'; t2 = 'AMARELA'; sub = 'SETOR ' + (s.sector + 1); full = true; }
+  else if (s.fia === 2 && AV.azul) { t1 = 'BANDEIRA'; t2 = 'AZUL'; pbg = '#2979FF'; fg = '#FFFFFF'; }
+  else if (s.fia === 1 && AV.verde) { t1 = 'BANDEIRA'; t2 = 'VERDE'; pbg = '#00C853'; }
   const key = t1 + ' ' + t2;
-  if (PK.key !== key) { PK.key = key; PK.t = now; }
-  const el_ = now - PK.t;
-  const showPop = t1 !== '' && (el_ < 4000 || s.red);
+  if (PK.key !== key) { PK.key = key; PK.t = now; if (t1 && AV.som) bip(); }
+  const ida = now - PK.t;
+  const showPop = t1 !== '' && (ida < AV.duracao * 1000 || s.red);
   P(pop, 'display', showPop ? 'block' : 'none');
   if (showPop) {
-    const pk = Math.min(1, el_ / 180), sc = 0.8 + 0.2 * (1 - Math.pow(1 - pk, 3));
+    const pk = Math.min(1, ida / 180), sc = 0.8 + 0.2 * (1 - Math.pow(1 - pk, 3));
     const pw = full ? 1560 : 1220, ph = full ? 720 : 500;
+    pop.classList.toggle('full', full);
     P(pop, 'width', pw + 'px'); P(pop, 'height', ph + 'px'); P(pop, 'background', pbg);
     P(pop, 'transform', `translate(${780 - pw / 2}px, ${360 - ph / 2}px) scale(${sc.toFixed(3)})`);
     const bh = sub ? ph * 0.27 : 0, ah = ph - bh;
@@ -652,6 +767,29 @@ function frame(now) {
     P(E.popBand, 'fontSize', Math.min(bh * 0.6, pw * 0.88 / (Math.max(sub.length, 1) * 0.72)) + 'px');
     box(E.popBand, ah, bh);
   }
+}
+
+// ---- bloco do DRS. Carro 2026 nao tem DRS: mostra o modo de ultrapassagem (overtake) e a aero ativa ----
+function desenharDrs(s) {
+  const dist = CFG.drsDistancia;
+  let txt, bg = V('bloco'), col = V('apagado'), bd = V('borda'), sub = '', subCol = V('rotulo');
+  if (s.fmt === 2026 && s.reg26) {
+    if (s.otActive) { txt = 'OVERTAKE'; bg = V('verde'); col = '#000000'; bd = V('verde'); }
+    else if (s.otAvail) { txt = 'OVERTAKE'; col = V('verde'); bd = V('verde'); }
+    else if (dist && s.otDist > 0) { txt = 'OVERTAKE ' + s.otDist + 'm'; col = V('texto'); bd = V('cinza'); }
+    else txt = 'OVERTAKE';
+    if (s.aeroMode === 1) { sub = 'AERO: MODO RETA'; subCol = s.otActive ? '#000000' : V('frio'); }
+    else if (dist && s.aeroDist > 0) sub = 'MODO RETA EM ' + s.aeroDist + 'm';
+    else sub = s.aeroAvail ? 'AERO: MODO RETA LIBERADO' : 'AERO: MODO CURVA';
+  } else if (s.drsFault) { txt = 'DRS FALHA'; bg = '#4A0000'; col = V('vermelho2'); bd = V('vermelho2'); }
+  else if (s.drs === 1) { txt = 'DRS ABERTO'; bg = V('verde'); col = '#000000'; bd = V('verde'); }
+  else if (s.drsAllowed === 1) { txt = 'DRS'; col = V('verde'); bd = V('verde'); }
+  else if (dist && s.drsDist > 0) { txt = 'DRS ' + s.drsDist + 'm'; col = V('texto'); bd = V('cinza'); }
+  else txt = 'DRS';
+  T(E.drs, txt); P(E.drs, 'fontSize', fit(txt, 360, 44));
+  P(E.drs, 'background', bg); P(E.drs, 'color', col); P(E.drs, 'borderColor', bd);
+  P(E.drs, 'paddingBottom', sub ? '22px' : '0px');
+  T(E.drsSub, sub); P(E.drsSub, 'color', subCol);
 }
 requestAnimationFrame(frame);
 </script>
