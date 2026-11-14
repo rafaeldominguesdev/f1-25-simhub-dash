@@ -12,7 +12,8 @@
 <link rel="icon" href="/icone.ico">
 <script src="/temas.js"></script>
 <style>
-  @font-face { font-family: 'Saira'; src: url(fonte/saira.woff2) format('woff2'); font-weight: 100 900; font-stretch: 50% 125%; }
+  @font-face { font-family: 'Saira'; src: url(fonte/saira.woff2) format('woff2'); font-weight: 100 900; font-stretch: 50% 125%; font-style: normal; }
+  @font-face { font-family: 'Saira'; src: url(fonte/saira-italico.woff2) format('woff2'); font-weight: 100 900; font-stretch: 50% 125%; font-style: italic; }
   html, body { margin: 0; height: 100%; background: #000; overflow: hidden; touch-action: none;
     -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; }
   #stage { position: absolute; left: 0; top: 0; width: 1560px; height: 720px; transform-origin: 0 0;
@@ -34,6 +35,22 @@
   .menu { cursor: pointer; }
   #popup { position: absolute; display: none; left: 0; top: 0; will-change: transform; border-radius: 18px; }
   #popup.full { border-radius: 0; }
+  /* ===== layout F1 (estilo transmissao): italico pesado, cantos cortados, faixa no topo ===== */
+  .lay-f1 { font-style: italic; }
+  .lay-f1 .tile { border-radius: 0; border-width: 4px 0 0 0; clip-path: polygon(16px 0, 100% 0, 100% 100%, 0 100%, 0 16px); }
+  .lay-f1 .lbl { font-weight: 900; letter-spacing: 2px; }
+  .lay-f1 .led { border-radius: 0 !important; transform: skewX(-16deg); }
+  .lay-f1 .bar { border-radius: 0; }
+  .lay-f1 #popup { border-radius: 0; clip-path: polygon(40px 0, 100% 0, calc(100% - 40px) 100%, 0 100%); }
+  .lay-f1 #popup.full { clip-path: none; }
+  .f1c { background: var(--bloco); border-top: 4px solid var(--borda); clip-path: polygon(18px 0, 100% 0, 100% 100%, 0 100%, 0 18px); }
+  .f1l { font-size: 16px; font-weight: 900; letter-spacing: 2.2px; color: var(--rotulo); justify-content: flex-start; }
+  .f1l::before { content: ''; width: 14px; height: 5px; margin-right: 9px; background: var(--destaque); transform: skewX(-30deg); flex: none; }
+  .f1pos { background: var(--destaque); color: #fff; font-weight: 900; clip-path: polygon(0 0, 100% 0, calc(100% - 26px) 100%, 0 100%); padding-right: 18px; }
+  .f1set { transform: skewX(-24deg); background: var(--caixa2); }
+  .f1chip { font-size: 14px; font-weight: 800; color: var(--tinta); transform: skewX(-12deg); }
+  .f1chip > span { transform: skewX(12deg); }
+  .f1n { font-weight: 900; font-stretch: 112%; }
 </style>
 </head>
 <body>
@@ -153,7 +170,7 @@ const PREVIA = /[?&]previa=1/.test(location.search); // miniatura dentro do app 
 
 // ================= CONFIG (vem do PC; aqui so o padrao ate chegar) =================
 let CFG = {
-  tema: 'classico', destaque: '', telas: { corrida: true, carro: true, info: true }, telaInicial: 0,
+  layout: 'classico', tema: 'classico', destaque: '', telas: { corrida: true, carro: true, info: true }, telaInicial: 0,
   blocos: {}, avisos: { duracao: 4, amarela: true, azul: true, verde: true, sc: true, vsc: true, vermelha: true, formacao: true, som: false },
   unidades: { velocidade: 'kmh', temperatura: 'c' }, leds: 'classico', drsDistancia: true,
 };
@@ -237,7 +254,7 @@ E.menu = [0, 1, 2].map((k) => {
   s.addEventListener('pointerdown', (ev) => { ev.preventDefault(); show(k); });
   return s;
 });
-E.leds = Array.from({ length: 15 }, (_, i) => el(header, 212 + i * 89, 8, 84, 34, { bg: V('ledoff'), radius: 6 }));
+E.leds = Array.from({ length: 15 }, (_, i) => el(header, 212 + i * 89, 8, 84, 34, { bg: V('ledoff'), radius: 6, cls: 'led' }));
 E.msg = el(header, 212, 8, 1340, 34, { size: 18, color: '#FFFFFF', bg: '#B00020', radius: 6 });
 E.msg.style.display = 'none';
 
@@ -434,6 +451,82 @@ function setPart(name, lv) {
   });
 })();
 
+// ---------- TELA 1 NO LAYOUT F1 (estilo transmissao / volante) ----------
+const F = {};
+(function () {
+  const p = document.createElement('div'); p.className = 'scr'; stage.appendChild(p); screens.push(p); // screens[3]
+  const caixa = (g, x, y, w, h, cor) => { const d = el(g, x, y, w, h, { cls: 'f1c' }); d.style.borderTopColor = cor; return d; };
+  const rot = (g, x, y, w, txt) => el(g, x, y, w, 24, { cls: 'f1l', text: txt });
+  // ---- linha de cima: posicao, volta, tempo da volta com setores, delta ----
+  F.pos = el(p, 8, 54, 172, 110, { cls: 'f1pos f1n', size: 78 });
+  caixa(p, 188, 54, 200, 110, V('destaque')); rot(p, 206, 64, 170, 'VOLTA');
+  F.lap = el(p, 188, 88, 200, 70, { size: 46, cls: 'f1n' });
+  let g = bloco(p, 'tempos');
+  caixa(g, 396, 54, 768, 110, V('forte')); rot(g, 416, 64, 300, 'VOLTA ATUAL');
+  F.cur = el(g, 396, 66, 768, 78, { size: 72, cls: 'f1n' });
+  F.set = [0, 1, 2].map((i) => el(g, 420 + i * 244, 146, 232, 10, { cls: 'f1set' }));
+  g = bloco(p, 'delta');
+  F.deltaBox = caixa(g, 1172, 54, 380, 110, V('cinza')); F.deltaRot = rot(g, 1190, 64, 300, 'DELTA');
+  F.delta = el(g, 1172, 80, 380, 80, { size: 66, cls: 'f1n' });
+
+  // ---- meio, esquerda: torre de tempos e danos ----
+  const linhaT = (g, y, cor, nome, corVal) => {
+    caixa(g, 8, y, 380, 76, cor); rot(g, 26, y + 8, 200, nome);
+    const v = el(g, 8, y + 26, 364, 48, { size: 40, cls: 'r f1n', color: corVal || V('texto') });
+    return v;
+  };
+  g = bloco(p, 'gap');   F.gap = linhaT(g, 172, V('frio'), 'GAP FRENTE', V('frio'));
+  g = bloco(p, 'tempos'); F.last = linhaT(g, 256, V('amarelo2'), 'ULTIMA'); F.best = linhaT(g, 340, V('roxo'), 'MELHOR', V('roxo'));
+  g = bloco(p, 'danos');
+  caixa(g, 8, 424, 380, 96, V('destaque')); rot(g, 26, 432, 200, 'DANOS');
+  F.dmg = [['ASA E', 'fwl'], ['ASA D', 'fwr'], ['TRAS', 'rw'], ['ASSOAL', 'floor'], ['DIFUS', 'diff'], ['SIDEP', 'sidepod'], ['MOTOR', 'engine'], ['CAMBIO', 'gearbox']]
+    .map(([n, key], i) => {
+      const c = el(g, 24 + (i % 4) * 89, 458 + Math.floor(i / 4) * 30, 83, 26, { cls: 'f1chip' });
+      const t = document.createElement('span'); c.appendChild(t);
+      return { n, key, c, t };
+    });
+
+  // ---- meio: marcha gigante ----
+  caixa(p, 396, 172, 768, 348, V('destaque')); rot(p, 416, 182, 200, 'MARCHA');
+  F.gear = el(p, 396, 186, 768, 270, { size: 280, cls: 'gear f1n' });
+  F.speed = el(p, 396, 452, 768, 62, { size: 54, cls: 'f1n' });
+  F.warn = el(p, 416, 210, 220, 30, { size: 18, cls: 'l' });
+  F.pen = el(p, 924, 182, 222, 30, { size: 18, cls: 'r', color: V('vermelho') });
+
+  // ---- meio, direita: pneus ----
+  g = bloco(p, 'pneus');
+  caixa(g, 1172, 172, 380, 348, V('forte')); rot(g, 1190, 182, 140, 'PNEUS');
+  F.cmp = el(g, 1342, 180, 196, 28, { size: 17, cls: 'r' });
+  F.tyres = [[0, 0], [1, 0], [0, 1], [1, 1]].map(([c, r]) => {
+    const x = 1186 + c * 180, y = 214 + r * 152, L = c === 0;
+    el(g, x, y, 172, 144, { bg: V('caixa') });
+    const bx = L ? x + 10 : x + 172 - 53;
+    const z = [0, 1, 2].map((k) => el(g, bx + k * 15, y + 14, 13, 116, { bg: V('verde2') }));
+    const zones = L ? z : z.slice().reverse(); // [fora, meio, dentro]
+    const tx = L ? x + 60 : x + 6, ha = L ? 'l' : 'r';
+    const temp = el(g, tx, y + 12, 106, 54, { size: 42, cls: ha, weight: 900 });
+    const wpct = el(g, tx, y + 70, 106, 30, { size: 24, cls: ha, weight: 900 });
+    const wbar = bar(g, tx, y + 110, 106, 12, V('verde2'));
+    return { zones, temp, wpct, wbar };
+  });
+
+  // ---- linha de baixo: DRS / overtake, ERS, box ----
+  g = bloco(p, 'drs');
+  F.drs = el(g, 8, 528, 380, 184, { cls: 'f1c f1n', size: 56 });
+  F.drsSub = el(g, 8, 650, 380, 30, { size: 18, weight: 700 });
+  g = bloco(p, 'ers');
+  caixa(g, 396, 528, 768, 184, V('amarelo2')); rot(g, 416, 538, 80, 'ERS');
+  F.ersMode = el(g, 486, 536, 400, 28, { size: 22, cls: 'l' });
+  F.ersPct = el(g, 866, 534, 280, 64, { size: 58, cls: 'r f1n' });
+  F.ersBar = bar(g, 416, 606, 728, 46, V('amarelo'));
+  F.ersBar.parentNode.style.transform = 'skewX(-14deg)';
+  F.ersUsed = el(g, 416, 664, 400, 32, { size: 19, cls: 'l', color: V('rotulo') });
+  F.bias = el(g, 846, 664, 300, 32, { size: 24, cls: 'r f1n', color: V('frio') });
+  g = bloco(p, 'box');
+  F.box = el(g, 1172, 528, 380, 184, { cls: 'f1c f1n', size: 50 });
+  F.boxSub = el(g, 1172, 652, 380, 30, { size: 18, weight: 700 });
+})();
+
 // ---------- AVISOS (bandeiras / safety car) ----------
 const pop = document.createElement('div'); pop.id = 'popup'; stage.appendChild(pop);
 E.popT1 = el(pop, 0, 0, 10, 10, { color: '#000' });
@@ -448,7 +541,8 @@ function show(k) {
   if (!on[k]) k = on.indexOf(true);
   if (k === cur) return;
   cur = k;
-  screens.forEach((s, i) => s.classList.toggle('on', i === k));
+  const alvo = (k === 0 && CFG.layout === 'f1') ? screens[3] : screens[k];
+  screens.forEach((s) => s.classList.toggle('on', s === alvo));
   pintarMenu();
 }
 function pintarMenu() {
@@ -476,7 +570,9 @@ function passo(dir) {
 let ledCores = [];
 let primeiraConfig = true;
 function aplicarConfig(c) {
+  const mudouLayout = CFG.layout !== c.layout;
   CFG = c;
+  stage.classList.toggle('lay-f1', c.layout === 'f1');
   TH = coresDoTema(c.tema, c.destaque);
   for (const k in TH) stage.style.setProperty('--' + k, TH[k]);
   document.body.style.background = TH.fundo;
@@ -484,7 +580,7 @@ function aplicarConfig(c) {
   ledCores = Array.from({ length: 15 }, (_, i) => V(est[i < 5 ? 0 : i < 10 ? 1 : 2]));
   for (const nome in BLOCOS) BLOCOS[nome].forEach((g) => { g.style.display = c.blocos[nome] === false ? 'none' : ''; });
   if (primeiraConfig) { primeiraConfig = false; cur = -1; show(c.telaInicial); }
-  else if (!ATIVA()[cur]) show(cur); else pintarMenu();
+  else if (!ATIVA()[cur] || mudouLayout) { const k = cur; cur = -1; show(k); } else pintarMenu();
 }
 aplicarConfig(CFG); primeiraConfig = true;
 
@@ -537,7 +633,7 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden && !w
 // ---- miniatura do app: dados de exemplo e testes de aviso ----
 const DEMO = {
   ok: true, fmt: 2025, pos: 4, lap: 23, totalLaps: 57, gap: 1.482, delta: -0.231, curLap: 62418, lastLap: 91904, bestLap: 91904,
-  invalid: false, sector: 1, warnings: 1, penalties: 0, dt: 0, sg: 0, pitStatus: 0, stops: 0, laneMs: 0, stopMs: 0,
+  invalid: false, sector: 2, curS1: 27.98, curS2: 28.9, warnings: 1, penalties: 0, dt: 0, sg: 0, pitStatus: 0, stops: 0, laneMs: 0, stopMs: 0,
   speed: 287, gear: 6, rpm: 11000, revPct: 60, drs: 0, brakeT: [1040, 860, 410, 280], tyreSurf: [98, 108, 92, 76],
   tyreInner: [101, 112, 95, 80], press: [22.6, 22.8, 20.4, 20.5], bias: 56, limiter: 0, drsAllowed: 0, drsDist: 140,
   compound: 17, tyreAge: 18, fia: 0, ers: 68, ersMode: 1, ersUsed: 41, reg26: 0, aeroMode: 0, aeroAvail: 0, aeroDist: 0,
@@ -614,7 +710,8 @@ function frame(now) {
   let gCol = V('texto');
   if (rp >= 97) gCol = V('vermelho');
   else if (gk < 1 && G.dir) gCol = mixHex(G.dir > 0 ? [0, 230, 118] : [255, 140, 0], rgb(TH.texto), ge);
-  const gEl = cur === 0 ? E.gear1 : cur === 1 ? E.gear2 : null;
+  const LF1 = CFG.layout === 'f1';
+  const gEl = cur === 0 ? (LF1 ? F.gear : E.gear1) : cur === 1 ? E.gear2 : null;
   if (gEl) { T(gEl, gearTxt(s.gear)); P(gEl, 'color', gCol); P(gEl, 'transform', `scale(${gScale.toFixed(3)})`); }
 
   // valores comuns
@@ -623,32 +720,14 @@ function frame(now) {
   const ers = Math.max(0, Math.min(100, s.ers || 0)), low = ers < 10;
   const lapStr = s.lap + '/' + s.totalLaps;
 
-  if (cur === 0) {
+  if (cur === 0 && LF1) corridaF1(s, now, deltaTxt, ers, low, lapStr);
+  else if (cur === 0) {
     T(E.pos, 'P' + s.pos);
     T(E.lap, lapStr);
     T(E.delta, deltaTxt); P(E.delta, 'color', deltaCol);
     T(E.gap, s.pos === 1 ? 'LIDER' : '+' + (s.gap || 0).toFixed(3));
-    desenharDrs(s);
-    // BOX
-    const ps = s.pitStatus, lane = ps > 0, lim = s.limiter === 1, blink = Math.floor(now / 300) % 2 === 0;
-    const inWin = s.pitIdeal > 0 && s.lap >= s.pitIdeal && s.lap <= s.pitLatest && !lane;
-    const laneT = s.laneMs / 1000, noLim = lane && !lim && ps !== 2;
-    let bt, bb, bc, bd;
-    if (ps === 2) { bt = 'PARADO'; bb = '#2979FF'; }
-    else if (noLim) { bt = 'LIMITADOR!'; bb = blink ? '#FF1744' : '#3A0000'; }
-    else if (ps === 1 && laneT < 4) { bt = 'ENTRADA BOX'; bb = blink ? '#2979FF' : '#FFFFFF'; }
-    else if (lim) { bt = 'LIMITADOR'; bb = blink ? '#2979FF' : '#0D2A66'; }
-    else if (lane) { bt = 'PIT LANE'; bb = '#0D2A66'; }
-    else if (inWin) { bt = 'BOX BOX'; bb = blink ? '#00838F' : '#003C42'; }
-    else { bt = 'BOX'; bb = V('bloco'); }
-    if (ps === 1 && laneT < 4 && !noLim) bc = blink ? '#FFFFFF' : '#0D2A66';
-    else bc = (lim || lane || inWin) ? '#FFFFFF' : V('apagado');
-    bd = noLim ? '#FF1744' : inWin ? '#00E5FF' : (lim || lane) ? '#2979FF' : V('borda');
-    T(E.box, bt); P(E.box, 'background', bb); P(E.box, 'color', bc); P(E.box, 'borderColor', bd);
-    T(E.boxSub, ps === 2 ? 'PARADA ' + (s.stopMs / 1000).toFixed(1) + 's'
-      : lane ? 'NO PIT ' + laneT.toFixed(1) + 's'
-      : (s.pitIdeal > 0 ? 'JANELA V' + s.pitIdeal + '-' + s.pitLatest : 'JANELA --') + '   PARADAS ' + s.stops);
-    P(E.boxSub, 'color', lane ? '#FFFFFF' : V('rotulo'));
+    desenharDrs(s, E.drs, E.drsSub, 360, 44, 22);
+    desenharBox(s, now, E.box, E.boxSub);
     // ERS (amarelo, sem piscar)
     T(E.ersPct, Math.round(ers) + '%'); P(E.ersPct, 'color', low ? V('vermelho') : V('texto'));
     P(E.ersBar, 'width', ers.toFixed(1) + '%');
@@ -770,7 +849,7 @@ function frame(now) {
 }
 
 // ---- bloco do DRS. Carro 2026 nao tem DRS: mostra o modo de ultrapassagem (overtake) e a aero ativa ----
-function desenharDrs(s) {
+function desenharDrs(s, box, subEl, maxW, base, padSub) {
   const dist = CFG.drsDistancia;
   let txt, bg = V('bloco'), col = V('apagado'), bd = V('borda'), sub = '', subCol = V('rotulo');
   if (s.fmt === 2026 && s.reg26) {
@@ -786,10 +865,85 @@ function desenharDrs(s) {
   else if (s.drsAllowed === 1) { txt = 'DRS'; col = V('verde'); bd = V('verde'); }
   else if (dist && s.drsDist > 0) { txt = 'DRS ' + s.drsDist + 'm'; col = V('texto'); bd = V('cinza'); }
   else txt = 'DRS';
-  T(E.drs, txt); P(E.drs, 'fontSize', fit(txt, 360, 44));
-  P(E.drs, 'background', bg); P(E.drs, 'color', col); P(E.drs, 'borderColor', bd);
-  P(E.drs, 'paddingBottom', sub ? '22px' : '0px');
-  T(E.drsSub, sub); P(E.drsSub, 'color', subCol);
+  T(box, txt); P(box, 'fontSize', fit(txt, maxW, base));
+  P(box, 'background', bg); P(box, 'color', col); P(box, 'borderColor', bd);
+  P(box, 'paddingBottom', sub ? padSub + 'px' : '0px');
+  T(subEl, sub); P(subEl, 'color', subCol);
+}
+
+// ---- bloco do BOX (os dois layouts) ----
+function desenharBox(s, now, box, subEl) {
+  const ps = s.pitStatus, lane = ps > 0, lim = s.limiter === 1, blink = Math.floor(now / 300) % 2 === 0;
+  const inWin = s.pitIdeal > 0 && s.lap >= s.pitIdeal && s.lap <= s.pitLatest && !lane;
+  const laneT = s.laneMs / 1000, noLim = lane && !lim && ps !== 2;
+  let bt, bb, bc, bd;
+  if (ps === 2) { bt = 'PARADO'; bb = '#2979FF'; }
+  else if (noLim) { bt = 'LIMITADOR!'; bb = blink ? '#FF1744' : '#3A0000'; }
+  else if (ps === 1 && laneT < 4) { bt = 'ENTRADA BOX'; bb = blink ? '#2979FF' : '#FFFFFF'; }
+  else if (lim) { bt = 'LIMITADOR'; bb = blink ? '#2979FF' : '#0D2A66'; }
+  else if (lane) { bt = 'PIT LANE'; bb = '#0D2A66'; }
+  else if (inWin) { bt = 'BOX BOX'; bb = blink ? '#00838F' : '#003C42'; }
+  else { bt = 'BOX'; bb = V('bloco'); }
+  if (ps === 1 && laneT < 4 && !noLim) bc = blink ? '#FFFFFF' : '#0D2A66';
+  else bc = (lim || lane || inWin) ? '#FFFFFF' : V('apagado');
+  bd = noLim ? '#FF1744' : inWin ? '#00E5FF' : (lim || lane) ? '#2979FF' : V('borda');
+  T(box, bt); P(box, 'background', bb); P(box, 'color', bc); P(box, 'borderColor', bd);
+  T(subEl, ps === 2 ? 'PARADA ' + (s.stopMs / 1000).toFixed(1) + 's'
+    : lane ? 'NO PIT ' + laneT.toFixed(1) + 's'
+    : (s.pitIdeal > 0 ? 'JANELA V' + s.pitIdeal + '-' + s.pitLatest : 'JANELA --') + '   PARADAS ' + s.stops);
+  P(subEl, 'color', lane ? '#FFFFFF' : V('rotulo'));
+}
+
+// ---- tela Corrida no layout F1 ----
+function corridaF1(s, now, deltaTxt, ers, low, lapStr) {
+  T(F.pos, 'P' + s.pos);
+  T(F.lap, lapStr);
+  T(F.cur, lapFmt(s.curLap)); P(F.cur, 'color', s.invalid ? V('vermelho') : V('texto'));
+  // faixa de setores da volta atual: roxo = melhorou o seu melhor, verde = igual, amarelo = mais lento, branco = setor atual
+  const feitos = [s.curS1, s.curS2];
+  F.set.forEach((e, i) => {
+    let c = V('caixa2');
+    if (i < s.sector && feitos[i] > 0) {
+      const b = s.secBest[i];
+      c = !(b > 0) ? V('verde') : feitos[i] < b - 0.0005 ? V('roxo') : feitos[i] <= b + 0.0005 ? V('verde') : V('amarelo');
+    } else if (i === s.sector) c = V('texto');
+    P(e, 'background', c);
+  });
+  // delta com o bloco inteiro colorido, como na TV
+  const d = s.delta, neutro = d == null || Math.abs(d) < 0.0005;
+  T(F.delta, deltaTxt);
+  P(F.deltaBox, 'background', neutro ? V('bloco') : d < 0 ? V('verde') : V('vermelho'));
+  P(F.delta, 'color', neutro ? V('texto') : d < 0 ? '#000000' : '#FFFFFF');
+  P(F.deltaRot, 'color', neutro ? V('rotulo') : d < 0 ? '#000000' : '#FFFFFF');
+  T(F.gap, s.pos === 1 ? 'LIDER' : '+' + (s.gap || 0).toFixed(3));
+  T(F.last, lapFmt(s.lastLap));
+  P(F.last, 'color', s.bestLap > 0 && s.lastLap === s.bestLap ? V('roxo') : V('texto'));
+  T(F.best, lapFmt(s.bestLap));
+  F.dmg.forEach((x) => { const v = s[x.key] || 0; T(x.t, x.n + ' ' + v); P(x.c, 'background', listCol(v)); });
+  T(F.speed, vel(s.speed));
+  T(F.warn, s.warnings ? 'AVISOS ' + s.warnings : '');
+  P(F.warn, 'color', s.warnings >= 3 ? V('vermelho') : V('amarelo2'));
+  T(F.pen, s.dt > 0 ? 'DRIVE THROUGH' : s.sg > 0 ? 'STOP & GO' : s.penalties > 0 ? 'PENAL +' + s.penalties + 's' : '');
+  const cmp = CMP[s.compound] || ['?', '---', V('rotulo')];
+  T(F.cmp, cmp[1] + ' · ' + s.tyreAge + ' VOLTAS'); P(F.cmp, 'color', cmp[2]);
+  F.tyres.forEach((t, i) => {
+    const surf = s.tyreSurf[i], inner = s.tyreInner[i], w = s.wear[i];
+    P(t.zones[0], 'background', tempCol(surf));
+    P(t.zones[1], 'background', tempCol((surf + inner) / 2));
+    P(t.zones[2], 'background', tempCol(inner));
+    T(t.temp, tmp(surf) + DEG); P(t.temp, 'color', tempCol(surf));
+    T(t.wpct, Math.round(w) + '%'); P(t.wpct, 'color', wearCol(w));
+    P(t.wbar, 'width', Math.max(0, 100 - w).toFixed(1) + '%'); P(t.wbar, 'background', wearCol(w));
+  });
+  desenharDrs(s, F.drs, F.drsSub, 340, 58, 34);
+  T(F.ersPct, Math.round(ers) + '%'); P(F.ersPct, 'color', low ? V('vermelho') : V('texto'));
+  P(F.ersBar, 'width', ers.toFixed(1) + '%');
+  T(F.ersMode, low ? 'BATERIA BAIXA' : ['NENHUM', 'MEDIO', 'HOTLAP', 'ULTRAPASSAGEM'][s.ersMode] || 'NENHUM');
+  P(F.ersMode, 'color', low ? V('vermelho') : V('amarelo'));
+  T(F.ersUsed, 'USADO NA VOLTA ' + Math.round(s.ersUsed || 0) + '%');
+  T(F.bias, 'BB ' + (s.bias || 0).toFixed(1));
+  desenharBox(s, now, F.box, F.boxSub);
+  P(F.box, 'paddingBottom', '34px');
 }
 requestAnimationFrame(frame);
 </script>
