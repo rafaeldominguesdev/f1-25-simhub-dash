@@ -29,6 +29,7 @@
 - `Iniciar.bat` continua funcionando (modo com janela preta, bom para ver erros).
 
 ## A FAZER (pedido do usuário em 14/11/2026)
+**A lista completa e detalhada está em `INSTRUCOES.md`** (app de configuração com interface bonita, skins, botão do controle para trocar de tela, distância do DRS, formato 2026, executável). Resumo:
 O usuário quer que isso vire **um app de verdade** para F1, que ele abre sozinho, sem precisar do Claude:
 1. **Executável `.exe`** que abre e liga tudo (hoje é o `.vbs`). Dá para compilar um launcher pequeno em C# com o `csc.exe` do .NET Framework do Windows (`C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe`, opção `/win32icon:icone.ico /target:winexe`), que roda `node servidor.js --app` escondido. Precisa ser feito/compilado no PC Windows.
 2. **Trocar skin (tema):** escolher no painel do app entre alguns temas de cores da dash (ex.: o atual preto/vermelho, um neon verde, um claro, cores de equipe genéricas, sem logos). Salvar a escolha num `config.json` ao lado do `servidor.js` e mandar para a dash junto com os dados (a dash troca as cores na hora). Hoje as cores ficam no objeto `C` do `dash.html` (linha ~149) e em várias cores fixas espalhadas: centralizar tudo no tema.
