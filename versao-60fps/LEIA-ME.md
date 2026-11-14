@@ -2,10 +2,11 @@
 
 Roda no mesmo PC Windows do jogo. **Feche o SimHub antes** (os dois escutam o jogo na mesma porta).
 
-1. **No PC:** dois cliques em `Iniciar.bat`.
-   - Na primeira vez, se não tiver o Node.js, ele instala sozinho pelo winget. Depois é só abrir o `Iniciar.bat` de novo.
+1. **No PC:** na primeira vez, dois cliques em **`Criar atalho.bat`**: ele cria o ícone **F1 25 Rafa Pro** na área de trabalho. Depois é só abrir pelo ícone.
+   - Se não tiver o Node.js, o app pergunta e instala sozinho. Depois é só abrir o ícone de novo.
    - Se o Windows perguntar sobre o firewall, marque **Redes privadas** e clique em Permitir (senão o iPhone não conecta).
-   - A janela mostra o endereço para abrir no iPhone. Deixe ela aberta enquanto joga.
+   - Abre uma janela com o painel do app: status do jogo, o endereço para o iPhone, e os botões **Abrir a dash no PC** e **Desligar**. Pode fechar a janela, a dash continua funcionando; para parar tudo, use **Desligar**.
+   - Para ver erros, dá para abrir pelo `Iniciar.bat` (janela preta).
 2. **No F1 25**, em Configurações → Telemetria:
    - Telemetria UDP: **Ligada** · Broadcast: **Desligado**
    - IP: **127.0.0.1** · Porta: **20777**

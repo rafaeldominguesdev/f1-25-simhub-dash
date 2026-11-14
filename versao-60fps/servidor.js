@@ -9,6 +9,8 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const crypto = require('crypto');
+const { spawn } = require('child_process');
+const MODO_APP = process.argv.includes('--app'); // aberto pelo icone: mostra a janela do painel
 
 const UDP_PORT = 20777;
 const HTTP_PORT = 8888;
@@ -77,6 +79,7 @@ function deltaUpdate(lapNum, dist, curMs, invalid, lastMs) {
 function parse(b) {
   if (b.length < HDR) return;
   const fmt = b.readUInt16LE(0);
+  ultimoFormato = fmt;
   if (fmt !== 2025) { avisarFormato(fmt); }
   const id = b.readUInt8(6);
   const uid = b.readBigUInt64LE(7).toString();
@@ -224,7 +227,8 @@ function history(b) {
   S.secBest = [secs(bestSec[0])[0], secs(bestSec[1])[1], secs(bestSec[2])[2]];
 }
 
-let avisouFmt = false;
+let avisouFmt = false, ultimoFormato = 0, pacotesSeg = 0, contPacotes = 0, meuIp = 'IP-DO-PC';
+setInterval(() => { pacotesSeg = contPacotes; contPacotes = 0; }, 1000);
 function avisarFormato(f) {
   if (avisouFmt) return; avisouFmt = true;
   console.log(`\n  ATENCAO: o jogo esta mandando o formato ${f}. Coloque "Formato UDP: 2025" na telemetria do jogo.\n`);
@@ -238,10 +242,20 @@ function snapshot() {
 const udp = dgram.createSocket({ type: 'udp4' });
 let lastPacket = 0;
 udp.on('message', (msg) => {
-  lastPacket = Date.now();
+  lastPacket = Date.now(); contPacotes++;
   if (parse(msg)) broadcast(snapshot());
 });
 udp.on('error', (e) => {
+  if (e.code === 'EADDRINUSE' && MODO_APP) {
+    // porta ocupada: ou o app ja esta aberto (mostra a janela dele) ou e o SimHub (avisa)
+    http.get(`http://localhost:${HTTP_PORT}/status`, (r) => {
+      let t = ''; r.on('data', (d) => (t += d)); r.on('end', () => {
+        if (t.includes('"jogo"')) abrirJanela(); else avisoWindows();
+        setTimeout(() => process.exit(0), 500);
+      });
+    }).on('error', () => { avisoWindows(); setTimeout(() => process.exit(0), 500); });
+    return;
+  }
   if (e.code === 'EADDRINUSE') console.error(`\n  A porta ${UDP_PORT} ja esta em uso: feche o SimHub antes (ele tambem escuta o jogo).\n`);
   else console.error('Erro no UDP:', e.message);
   process.exit(1);
@@ -256,10 +270,25 @@ setInterval(() => {
 // ================= HTTP + WEBSOCKET (sem bibliotecas) =================
 const files = {
   '/': ['dash.html', 'text/html; charset=utf-8'],
+  '/painel': ['painel.html', 'text/html; charset=utf-8'],
   '/fonte/saira.woff2': ['fonte/saira.woff2', 'font/woff2'],
 };
 const server = http.createServer((req, res) => {
-  const f = files[req.url.split('?')[0]];
+  const url = req.url.split('?')[0];
+  // painel do app (so no proprio PC): status e desligar
+  const local = /^(::1|127\.0\.0\.1|::ffff:127\.0\.0\.1)$/.test(req.socket.remoteAddress || '');
+  if (url === '/status') {
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' });
+    return res.end(JSON.stringify({
+      jogo: Date.now() - lastPacket < 1500, formato: ultimoFormato, porSegundo: pacotesSeg,
+      aparelhos: clients.size, endereco: `http://${meuIp}:${HTTP_PORT}`,
+    }));
+  }
+  if (url === '/desligar' && req.method === 'POST' && local) {
+    res.writeHead(200); res.end('ok');
+    return setTimeout(() => process.exit(0), 300);
+  }
+  const f = files[url];
   if (!f) { res.writeHead(404); return res.end(); }
   res.writeHead(200, { 'Content-Type': f[1], 'Cache-Control': 'no-cache' });
   fs.createReadStream(path.join(__dirname, f[0])).pipe(res);
@@ -297,7 +326,25 @@ function broadcast(str) {
   }
 }
 
+function avisoWindows() {
+  const msg = 'Feche o SimHub antes de abrir o F1 25 - Rafa Pro. Os dois usam a mesma porta do jogo.';
+  spawn('powershell', ['-NoProfile', '-Command', `Add-Type -AssemblyName PresentationFramework; [System.Windows.MessageBox]::Show('${msg}', 'F1 25 - Rafa Pro') | Out-Null`],
+    { detached: true, stdio: 'ignore', windowsHide: true }).unref();
+}
+
+// Abre o painel como janela de aplicativo (Edge sem barra de endereco)
+function abrirJanela() {
+  const edges = ['C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe', 'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe'];
+  const edge = edges.find((p) => fs.existsSync(p));
+  const perfil = path.join(os.tmpdir(), 'f125-rafa-pro-app');
+  const args = [`--app=http://localhost:${HTTP_PORT}/painel`, '--window-size=560,720', `--user-data-dir=${perfil}`, '--no-first-run'];
+  if (edge) spawn(edge, args, { detached: true, stdio: 'ignore' }).unref();
+  else spawn('cmd', ['/c', 'start', '', `http://localhost:${HTTP_PORT}/painel`], { detached: true, stdio: 'ignore' }).unref();
+}
+
 server.on('error', (e) => {
+  // ja tem um app aberto? so mostra a janela dele de novo
+  if (e.code === 'EADDRINUSE' && MODO_APP) { abrirJanela(); setTimeout(() => process.exit(0), 500); return; }
   if (e.code === 'EADDRINUSE') console.error(`\n  A porta ${HTTP_PORT} ja esta em uso. Feche o SimHub (ou outra dash aberta) e tente de novo.\n`);
   else console.error('Erro no servidor:', e.message);
   process.exit(1);
@@ -310,6 +357,8 @@ server.listen(HTTP_PORT, () => {
   const lan = (a) => /^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)/.test(a.ip);
   const good = all.filter((a) => !virt.test(a.name) && lan(a)).concat(all.filter((a) => virt.test(a.name) || !lan(a)));
   const ip = good.length ? good[0].ip : 'IP-DO-PC';
+  meuIp = ip;
+  if (MODO_APP) abrirJanela();
   console.log('\n  F1 25 - Rafa Pro (60 fps) rodando\n');
   console.log(`  No F1 25 (Telemetria):  IP 127.0.0.1   Porta ${UDP_PORT}   Formato 2025   Taxa 60 Hz`);
   console.log(`  No iPhone (Safari):     http://${ip}:${HTTP_PORT}\n`);

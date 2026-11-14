@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>F1 25 - Rafa Pro</title>
+<style>
+  @font-face { font-family: 'Saira'; src: url('/fonte/saira.woff2') format('woff2'); font-weight: 100 900; }
+  :root { --bg: #050506; --card: #0d0d10; --line: #2a2a30; --txt: #ffffff; --sub: #8e8e96; --red: #e10600; --green: #00e676; --yellow: #ffd600; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--txt); font-family: 'Saira', 'Segoe UI', sans-serif; }
+  body { padding: 18px; display: flex; flex-direction: column; gap: 12px; min-height: 100vh; }
+  header { display: flex; align-items: baseline; justify-content: space-between; border-bottom: 3px solid var(--red); padding-bottom: 8px; }
+  header h1 { margin: 0; font-size: 26px; font-weight: 800; letter-spacing: 1px; }
+  header span { color: var(--red); font-weight: 800; font-size: 16px; }
+  .card { background: var(--card); border: 2px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+  .card h2 { margin: 0 0 8px; font-size: 13px; color: var(--sub); font-weight: 700; letter-spacing: 1px; }
+  .row { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 700; }
+  .dot { width: 14px; height: 14px; border-radius: 50%; background: #444; flex: none; }
+  .dot.on { background: var(--green); box-shadow: 0 0 10px var(--green); }
+  .dot.off { background: var(--yellow); }
+  .small { color: var(--sub); font-size: 14px; font-weight: 600; margin-top: 4px; }
+  .warn { color: #ff5a4d; font-size: 14px; font-weight: 700; margin-top: 6px; display: none; }
+  .addr { font-size: 30px; font-weight: 800; color: var(--green); word-break: break-all; user-select: all; }
+  table { border-collapse: collapse; font-size: 15px; font-weight: 600; }
+  td { padding: 2px 12px 2px 0; } td:first-child { color: var(--sub); }
+  .btns { display: flex; gap: 10px; margin-top: auto; }
+  button { flex: 1; font-family: inherit; font-size: 17px; font-weight: 800; padding: 14px; border-radius: 10px; border: 2px solid var(--line); background: #16161b; color: var(--txt); cursor: pointer; }
+  button:hover { border-color: #55555f; }
+  button.main { background: var(--red); border-color: #ff5a4d; }
+  button.main:hover { background: #ff1a10; }
+  .off-screen { display: none; text-align: center; margin: auto; font-size: 20px; font-weight: 700; }
+</style>
+</head>
+<body>
+<div id="app" style="display: contents">
+  <header><h1>F1 25 · RAFA PRO</h1><span>60 FPS</span></header>
+
+  <div class="card">
+    <h2>JOGO</h2>
+    <div class="row"><div class="dot" id="dot"></div><div id="jogo">Ligando...</div></div>
+    <div class="small" id="taxa">&nbsp;</div>
+    <div class="warn" id="fmt"></div>
+  </div>
+
+  <div class="card">
+    <h2>ABRA NO IPHONE (SAFARI, MESMO WI-FI)</h2>
+    <div class="addr" id="addr">...</div>
+    <div class="small" id="aparelhos">Nenhum aparelho conectado</div>
+  </div>
+
+  <div class="card">
+    <h2>NO F1 25: CONFIGURAÇÕES → TELEMETRIA</h2>
+    <table>
+      <tr><td>Telemetria UDP</td><td>Ligada</td></tr>
+      <tr><td>IP</td><td>127.0.0.1</td></tr>
+      <tr><td>Porta</td><td>20777</td></tr>
+      <tr><td>Formato UDP</td><td>2025</td></tr>
+      <tr><td>Taxa de envio</td><td>60 Hz</td></tr>
+    </table>
+    <div class="small">Pode fechar esta janela: a dash continua funcionando no iPhone. Para parar tudo, use Desligar.</div>
+  </div>
+
+  <div class="btns">
+    <button class="main" id="ver">Abrir a dash no PC</button>
+    <button id="desligar">Desligar</button>
+  </div>
+</div>
+<div class="off-screen" id="desligado">Desligado.<br><span class="small">Pode fechar esta janela.</span></div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  let parado = false;
+  async function atualizar() {
+    if (parado) return;
+    try {
+      const s = await (await fetch('/status', { cache: 'no-store' })).json();
+      $('dot').className = 'dot ' + (s.jogo ? 'on' : 'off');
+      $('jogo').textContent = s.jogo ? 'Recebendo dados do jogo' : 'Aguardando o F1 25 (entre na pista)';
+      $('taxa').textContent = s.jogo ? s.porSegundo + ' pacotes por segundo' : ' ';
+      const ruim = s.formato && s.formato !== 2025;
+      $('fmt').style.display = ruim ? 'block' : 'none';
+      if (ruim) $('fmt').textContent = 'O jogo está mandando o formato ' + s.formato + '. Coloque "Formato UDP: 2025" na telemetria do jogo.';
+      $('addr').textContent = s.endereco;
+      $('aparelhos').textContent = s.aparelhos === 0 ? 'Nenhum aparelho conectado'
+        : s.aparelhos === 1 ? '1 aparelho conectado' : s.aparelhos + ' aparelhos conectados';
+    } catch (e) {
+      $('dot').className = 'dot'; $('jogo').textContent = 'O app está desligado';
+    }
+  }
+  setInterval(atualizar, 500); atualizar();
+
+  $('ver').onclick = () => window.open('/', 'dash', 'popup,width=1560,height=720');
+  $('desligar').onclick = async () => {
+    parado = true;
+    try { await fetch('/desligar', { method: 'POST' }); } catch (e) {}
+    $('app').style.display = 'none'; $('desligado').style.display = 'block';
+    setTimeout(() => window.close(), 1500);
+  };
+</script>
+</body>
+</html>

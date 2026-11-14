@@ -462,8 +462,8 @@ function frame(now) {
   requestAnimationFrame(frame);
   const s = S;
   // mensagem quando nao tem dado
-  const msg = !connected ? 'SEM CONEXAO COM O MAC  (o servidor.js esta rodando?)'
-    : (!s || !s.ok) ? 'AGUARDANDO O F1 25  (Telemetria UDP ligada, IP do Mac, porta 20777, formato 2025)' : '';
+  // so avisa se perder a conexao com o PC (sem a faixa de "aguardando o jogo")
+  const msg = !connected ? 'SEM CONEXAO COM O PC' : '';
   T(E.msg, msg); P(E.msg, 'display', msg ? 'flex' : 'none');
   if (!s) return;
 
