@@ -171,6 +171,17 @@
   .tema .sel { position: absolute; right: 0; top: 0; padding: 3px 10px 3px 14px; background: var(--vermelho); font-style: italic; font-weight: 900; font-size: 10px; letter-spacing: 1.5px;
     clip-path: polygon(8px 0, 100% 0, 100% 100%, 0 100%); display: none; z-index: 1; }
   .tema.on .sel { display: block; }
+  .layouts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .layout { position: relative; display: grid; grid-template-columns: 180px 1fr; gap: 16px; align-items: center; padding: 12px; border: 0; cursor: pointer; text-align: left;
+    background: var(--painel2); color: var(--branco); clip-path: polygon(12px 0, 100% 0, 100% 100%, 0 100%, 0 12px); box-shadow: inset 0 0 0 2px transparent; }
+  .layout:hover { background: var(--painel3); }
+  .layout.on { box-shadow: inset 0 0 0 3px var(--vermelho); }
+  .layout.on .sel { display: block; }
+  .layout svg { width: 180px; height: 83px; display: block; background: #000; }
+  .layout b { display: block; font-style: italic; font-weight: 900; font-size: 20px; text-transform: uppercase; }
+  .layout small { display: block; margin-top: 4px; color: var(--cinza); font-size: 13px; line-height: 1.45; }
+  .layout .sel { position: absolute; right: 0; top: 0; padding: 3px 10px 3px 14px; background: var(--vermelho); font-style: italic; font-weight: 900; font-size: 10px; letter-spacing: 1.5px;
+    clip-path: polygon(8px 0, 100% 0, 100% 100%, 0 100%); display: none; }
   .cores { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
   .cor { width: 34px; height: 30px; border: 0; cursor: pointer; padding: 0; clip-path: polygon(7px 0, 100% 0, calc(100% - 7px) 100%, 0 100%); }
   .cor.on { box-shadow: inset 0 0 0 3px #fff; }
@@ -343,8 +354,51 @@
   </section>
 
   <!-- ================= APARENCIA ================= -->
-  <section class="aba" id="aba-aparencia" data-titulo="Aparência" data-desc="Muda na hora, no iPhone e aqui na prévia.">
+  <section class="aba" id="aba-aparencia" data-titulo="Aparência" data-desc="Layout, tema e cores. Muda na hora, no iPhone e aqui na prévia.">
     <div class="pilha">
+      <div class="painel"><div class="pc"><div class="rotulo">Layout da dash</div>
+        <div class="layouts">
+          <button class="layout" data-layout="classico">
+            <svg viewBox="0 0 210 97" aria-hidden="true">
+              <g fill="none" stroke-width="1.6">
+                <rect x="3" y="12" width="26" height="14" rx="2" stroke="#E10600"/><rect x="31" y="12" width="26" height="14" rx="2" stroke="#E10600"/>
+                <rect x="3" y="29" width="54" height="22" rx="2" stroke="#5A5A62"/><rect x="3" y="54" width="54" height="15" rx="2" stroke="#00E5FF"/>
+                <rect x="3" y="72" width="54" height="10" rx="2" stroke="#2A2A30"/><rect x="3" y="84" width="54" height="10" rx="2" stroke="#2A2A30"/>
+                <rect x="60" y="12" width="92" height="14" rx="2" stroke="#FFC400"/><rect x="60" y="29" width="92" height="40" rx="2" stroke="#E10600"/>
+                <rect x="60" y="72" width="92" height="22" rx="2" stroke="#FFFFFF"/>
+                <rect x="155" y="12" width="52" height="14" rx="2" stroke="#FFFFFF"/><rect x="155" y="29" width="52" height="12" rx="2" stroke="#FFC400"/>
+                <rect x="155" y="44" width="52" height="12" rx="2" stroke="#B14CFF"/><rect x="155" y="59" width="52" height="35" rx="2" stroke="#E10600"/>
+              </g>
+              <g fill="#00E676"><rect x="40" y="3" width="10" height="5"/><rect x="52" y="3" width="10" height="5"/><rect x="64" y="3" width="10" height="5"/></g>
+              <g fill="#E10600"><rect x="76" y="3" width="10" height="5"/><rect x="88" y="3" width="10" height="5"/></g>
+              <text x="106" y="57" fill="#fff" font-size="26" font-weight="800" text-anchor="middle" font-family="Saira">6</text>
+            </svg>
+            <div><b>Clássico</b><small>O desenho original da dash, igual ao do SimHub.</small></div>
+            <span class="sel">ATUAL</span>
+          </button>
+          <button class="layout" data-layout="f1">
+            <svg viewBox="0 0 210 97" aria-hidden="true">
+              <polygon points="3,12 30,12 26,26 3,26" fill="#E10600"/>
+              <g fill="#101013">
+                <polygon points="35,12 57,12 57,26 32,26 32,15"/><polygon points="63,12 152,12 152,26 60,26 60,15"/><polygon points="158,12 207,12 207,26 155,26 155,15"/>
+                <polygon points="6,29 57,29 57,41 3,41 3,32"/><polygon points="6,44 57,44 57,56 3,56 3,47"/><polygon points="6,59 57,59 57,71 3,71 3,62"/>
+                <polygon points="63,29 152,29 152,71 60,71 60,32"/><polygon points="158,29 207,29 207,71 155,71 155,32"/>
+                <polygon points="6,74 57,74 57,94 3,94 3,77"/><polygon points="63,74 152,74 152,94 60,94 60,77"/><polygon points="161,74 207,74 207,94 155,94 155,77"/>
+              </g>
+              <polygon points="158,12 207,12 207,26 155,26 155,15" fill="#00D26A"/>
+              <g fill="#E10600"><rect x="60" y="29" width="92" height="2"/><rect x="3" y="74" width="54" height="2"/></g>
+              <rect x="63" y="74" width="89" height="2" fill="#FFC400"/>
+              <polygon points="66,84 120,84 117,90 63,90" fill="#FFD600"/>
+              <g><polygon points="66,23 92,23 91,25 65,25" fill="#A64DFF"/><polygon points="95,23 121,23 120,25 94,25" fill="#00D26A"/><polygon points="124,23 150,23 149,25 123,25" fill="#fff"/></g>
+              <g transform="skewX(-16)"><g fill="#00E676"><rect x="42" y="3" width="10" height="5"/><rect x="54" y="3" width="10" height="5"/><rect x="66" y="3" width="10" height="5"/></g><g fill="#E10600"><rect x="78" y="3" width="10" height="5"/><rect x="90" y="3" width="10" height="5"/></g></g>
+              <text x="106" y="62" fill="#fff" font-size="30" font-weight="900" font-style="italic" text-anchor="middle" font-family="Saira">6</text>
+              <text x="12" y="23" fill="#fff" font-size="10" font-weight="900" font-style="italic" font-family="Saira">P4</text>
+            </svg>
+            <div><b>F1</b><small>Estilo transmissão: setores coloridos e delta verde ou vermelho.</small></div>
+            <span class="sel">ATUAL</span>
+          </button>
+        </div>
+      </div></div>
       <div class="painel"><div class="pc"><div class="rotulo">Tema</div><div class="temas" id="temas"></div></div></div>
       <div class="grade g2">
         <div class="painel"><div class="pc">
@@ -521,6 +575,10 @@ function mudar(fn) { fn(CFG); desenharTudo(); salvar(); }
 // ================= APARENCIA =================
 const DESTAQUES = ['#E10600', '#FF7A00', '#FFC400', '#00F07A', '#00D2BE', '#2F7BFF', '#C2185B', '#C7CDD6'];
 function desenharAparencia() {
+  document.querySelectorAll('.layout').forEach((b) => {
+    b.classList.toggle('on', CFG.layout === b.dataset.layout);
+    b.onclick = () => { mudar((x) => { x.layout = b.dataset.layout; }); previaTela(0); };
+  });
   const box = $('temas'); box.innerHTML = '';
   for (const id in TEMAS) {
     const c = coresDoTema(id);
