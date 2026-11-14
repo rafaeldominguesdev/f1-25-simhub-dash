@@ -4,6 +4,8 @@ Dashboard para **F1 25** no **SimHub (Dash Studio)**, feita para ficar em tela c
 
 ![Tela principal](imagens/01_tela1_corrida.png)
 
+> **Versão própria a 60 fps, sem SimHub:** pasta [`versao-60fps`](versao-60fps). Veja o [LEIA-ME](versao-60fps/LEIA-ME.md).
+
 ## Download
 
 Baixe o arquivo **[`F1 25 - Rafa Pro.simhubdash`](F1%2025%20-%20Rafa%20Pro.simhubdash)** e dê dois cliques com o SimHub instalado.

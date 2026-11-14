@@ -10,8 +10,12 @@
 - O SimHub do usuário é **grátis**: limita as dashes a ~10–15 fps e **só alimenta uma tela por vez** (abrir a dash no PC ou numa aba de teste deixa o iPhone preto). Nunca abrir a dash no navegador para testar enquanto ele usa o iPhone.
 - O usuário **não quer pagar a licença** do SimHub. Não burlar a licença.
 
-## Próximo projeto: versão própria a 60 fps (sem SimHub)
-- Programa próprio que lê a **telemetria UDP do F1 25** (formato 2025; o jogo usa o pacote de temporada 2026) e manda para o iPhone por WebSocket. A dash vira uma página web desenhada a 60 fps.
+## Versão própria a 60 fps (sem SimHub) — pasta `versao-60fps/`
+- Feita em 14/11/2026. `servidor.js` (Node, sem dependências) lê a **telemetria UDP do F1 25** (formato 2025; o jogo usa o pacote de temporada 2026) e manda para o iPhone por WebSocket; `dash.html` desenha a 60 fps. `Iniciar.bat` liga tudo no Windows (instala o Node pelo winget se faltar).
+- Roda **no PC Windows do jogo**: no jogo o IP da telemetria é `127.0.0.1`. O SimHub precisa estar fechado (mesma porta 20777).
+- Só tem o necessário para jogar: o usuário não quer extras.
+- Testada só com simulador de pacotes + Chrome; falta testar com o jogo e no iPhone de verdade.
+- O jogo não manda temperatura fora/meio/dentro do pneu: as 3 faixas são superfície / média / carcaça.
 - Repetir o visual e as funções da versão SimHub: as 3 telas, o carro neon com as peças mudando de cor pelo dano, os avisos de bandeira (vermelha/amarela em tela cheia; SC, VSC, azul, verde e formação roxa num painel grande; sem quadriculada e sem preta), ERS amarelo sem piscar, DRS que acende, marcha animada (cresce com toque verde ao subir e encolhe com toque laranja ao reduzir; vermelha na hora de trocar), luzes de RPM em retângulos, pneus com 3 faixas de temperatura, sem combustível, contornos finos e fundo preto.
 - Os desenhos (`carro/`, `ferramentas/*.html`) são originais e podem ser reaproveitados. **Não usar arte da DeltaSimLabs** (licença proíbe) nem logos da F1.
-- O jogo manda o UDP para **um IP só**: para rodar o programa no MacBook, colocar o IP do Mac na configuração de telemetria do jogo (mesma rede Wi-Fi).
+- O jogo manda o UDP para **um IP só**: por isso o programa roda no mesmo PC do jogo (127.0.0.1).
