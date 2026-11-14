@@ -323,13 +323,15 @@ udp.on('message', (msg) => {
   lastPacket = Date.now(); contPacotes++;
   if (parse(msg)) broadcast(snapshot());
 });
+let jaTratou = false; // a porta do jogo e a do app podem dar erro juntas: so um aviso
 udp.on('error', (e) => {
   if (e.code === 'EADDRINUSE' && MODO_APP) {
+    if (jaTratou) return; jaTratou = true;
     // porta ocupada: ou o app ja esta aberto (mostra a janela dele) ou e o SimHub (avisa)
     http.get(`http://localhost:${HTTP_PORT}/status`, (r) => {
       let t = ''; r.on('data', (d) => (t += d)); r.on('end', () => {
-        if (t.includes('"jogo"')) abrirJanela(); else avisoWindows();
-        setTimeout(() => process.exit(0), 500);
+        if (t.includes('"jogo"')) focarOuAbrir(); else avisoWindows();
+        setTimeout(() => process.exit(0), 3000);
       });
     }).on('error', () => { avisoWindows(); setTimeout(() => process.exit(0), 500); });
     return;
@@ -352,6 +354,7 @@ const files = {
   '/painel/qrcode.js': ['painel/qrcode.js', 'text/javascript; charset=utf-8'],
   '/temas.js': ['temas.js', 'text/javascript; charset=utf-8'],
   '/fonte/saira.woff2': ['fonte/saira.woff2', 'font/woff2'],
+  '/fonte/saira-italico.woff2': ['fonte/saira-italico.woff2', 'font/woff2'],
   '/icone.ico': ['icone.ico', 'image/x-icon'],
 };
 const ehLocal = (req) => /^(::1|127\.0\.0\.1|::ffff:127\.0\.0\.1)$/.test(req.socket.remoteAddress || '');
@@ -410,7 +413,7 @@ server.on('upgrade', (req, sock) => {
   sock.write('HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\n' +
              `Sec-WebSocket-Accept: ${accept}\r\n\r\n`);
   sock.setNoDelay(true);
-  sock.previa = /[?&]previa=1/.test(req.url); // miniatura do app nao conta como aparelho
+  sock.previa = /[?&](previa|pc)=1/.test(req.url); // previa e dash dentro do app nao contam como iPhone
   clients.add(sock);
   sock.on('data', (d) => { if ((d[0] & 0x0f) === 0x8) sock.destroy(); }); // pedido de fechar
   sock.on('close', () => clients.delete(sock));
@@ -447,6 +450,15 @@ function avisoWindows() {
     { detached: true, stdio: 'ignore', windowsHide: true }).unref();
 }
 
+// App ja ligado: traz a janela que ja esta aberta para a frente (pelo titulo). So abre outra se ela foi fechada.
+function focarOuAbrir() {
+  if (process.platform !== 'win32') return;
+  const ps = spawn('powershell', ['-NoProfile', '-Command',
+    "$w = New-Object -ComObject WScript.Shell; if ($w.AppActivate('Rafa Pro')) { exit 0 } else { exit 1 }"], { windowsHide: true });
+  ps.on('exit', (code) => { if (code !== 0) abrirJanela(); });
+  ps.on('error', () => abrirJanela());
+}
+
 // Abre o app (painel) como janela de aplicativo (Edge sem barra de endereco)
 function abrirJanela() {
   if (process.platform !== 'win32') return;
@@ -460,7 +472,7 @@ function abrirJanela() {
 
 server.on('error', (e) => {
   // ja tem um app aberto? so mostra a janela dele de novo
-  if (e.code === 'EADDRINUSE' && MODO_APP) { abrirJanela(); setTimeout(() => process.exit(0), 500); return; }
+  if (e.code === 'EADDRINUSE' && MODO_APP) { if (jaTratou) return; jaTratou = true; focarOuAbrir(); setTimeout(() => process.exit(0), 3000); return; }
   if (e.code === 'EADDRINUSE') console.error(`\n  A porta ${HTTP_PORT} ja esta em uso. Feche o SimHub (ou o app ja aberto) e tente de novo.\n`);
   else console.error('Erro no servidor:', e.message);
   process.exit(1);

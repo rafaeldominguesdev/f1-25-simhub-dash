@@ -520,7 +520,7 @@ function bip() {
 // ================= CONEXAO =================
 let S = null, connected = false, ws = null;
 function connect() {
-  ws = new WebSocket(`ws://${location.host}/ws${PREVIA ? '?previa=1' : ''}`);
+  ws = new WebSocket(`ws://${location.host}/ws${location.search}`); // ?previa=1 / ?pc=1: nao conta como iPhone
   ws.onopen = () => { connected = true; };
   ws.onmessage = (ev) => {
     const m = JSON.parse(ev.data);
