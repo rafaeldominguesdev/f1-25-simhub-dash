@@ -1,15 +1,20 @@
 @echo off
-rem Cria o icone "F1 25 Rafa Pro" na area de trabalho (so precisa rodar uma vez).
+chcp 65001 >nul
+rem Cria o icone "F1 25 Rafa Pro" na area de trabalho. Compila o exe antes, se faltar.
 cd /d "%~dp0"
+if not exist "F1 25 Rafa Pro.exe" call "Compilar exe.bat" /quieto
+if not exist "F1 25 Rafa Pro.exe" exit /b 1
 powershell -NoProfile -ExecutionPolicy Bypass -Command ^
   "$p = (Get-Location).Path;" ^
+  "$exe = Join-Path $p 'F1 25 Rafa Pro.exe';" ^
   "$lnk = Join-Path ([Environment]::GetFolderPath('Desktop')) 'F1 25 Rafa Pro.lnk';" ^
   "$s = (New-Object -ComObject WScript.Shell).CreateShortcut($lnk);" ^
-  "$s.TargetPath = 'wscript.exe';" ^
-  "$s.Arguments = '\"' + (Join-Path $p 'F1 25 Rafa Pro.vbs') + '\"';" ^
+  "$s.TargetPath = $exe;" ^
+  "$s.Arguments = '';" ^
   "$s.WorkingDirectory = $p;" ^
-  "$s.IconLocation = (Join-Path $p 'icone.ico');" ^
+  "$s.IconLocation = $exe + ',0';" ^
   "$s.Description = 'F1 25 - Rafa Pro (dash 60 fps)';" ^
   "$s.Save();" ^
-  "Write-Host 'Pronto: o icone F1 25 Rafa Pro esta na area de trabalho.'"
+  "Write-Host '';" ^
+  "Write-Host '  Pronto: o icone F1 25 Rafa Pro esta na area de trabalho.'"
 pause

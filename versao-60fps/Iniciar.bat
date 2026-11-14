@@ -1,6 +1,7 @@
 @echo off
 chcp 65001 >nul
 title F1 25 - Rafa Pro (60 fps)
+rem Abre o app com a janela preta (bom para ver erros). O jeito normal e o icone.
 cd /d "%~dp0"
 where node >nul 2>nul
 if errorlevel 1 (
@@ -13,5 +14,5 @@ if errorlevel 1 (
   pause
   exit /b
 )
-node servidor.js
+node app\servidor.js
 pause

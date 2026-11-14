@@ -1,1 +1,4 @@
 build/
+versao-60fps/app/config.json
+versao-60fps/app/erro.log
+versao-60fps/*.exe
