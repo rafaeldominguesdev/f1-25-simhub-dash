@@ -4,7 +4,7 @@ Dashboard para **F1 25** no **SimHub (Dash Studio)**, feita para ficar em tela c
 
 ![Tela principal](imagens/01_tela1_corrida.png)
 
-> **Versão própria a 60 fps, sem SimHub:** pasta [`versao-60fps`](versao-60fps). Veja o [LEIA-ME](versao-60fps/LEIA-ME.md).
+> **Versão própria a 60 fps, sem SimHub:** um app para Windows com janela de configuração (temas, telas, botão do volante, avisos) que lê os formatos 2025 e 2026 da telemetria. Baixe o `.zip` em **[Releases](../../releases)** ou veja a pasta [`versao-60fps`](versao-60fps) e o [LEIA-ME](versao-60fps/LEIA-ME.md).
 
 ## Download
 

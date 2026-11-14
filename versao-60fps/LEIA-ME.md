@@ -1,20 +1,43 @@
 # F1 25 - Rafa Pro (60 fps, sem SimHub)
 
-Roda no mesmo PC Windows do jogo. **Feche o SimHub antes** (os dois escutam o jogo na mesma porta).
+App para o PC Windows do jogo: liga a dash do iPhone a 60 fps e tem uma janela para configurar tudo
+(tema, telas, botão do volante para trocar de tela, avisos, unidades).
 
-1. **No PC:** na primeira vez, dois cliques em **`Criar atalho.bat`**: ele cria o ícone **F1 25 Rafa Pro** na área de trabalho. Depois é só abrir pelo ícone.
-   - Se não tiver o Node.js, o app pergunta e instala sozinho. Depois é só abrir o ícone de novo.
-   - Se o Windows perguntar sobre o firewall, marque **Redes privadas** e clique em Permitir (senão o iPhone não conecta).
-   - Abre uma janela com o painel do app: status do jogo, o endereço para o iPhone, e os botões **Abrir a dash no PC** e **Desligar**. Pode fechar a janela, a dash continua funcionando; para parar tudo, use **Desligar**.
-   - Para ver erros, dá para abrir pelo `Iniciar.bat` (janela preta).
-2. **No F1 25**, em Configurações → Telemetria:
-   - Telemetria UDP: **Ligada** · Broadcast: **Desligado**
-   - IP: **127.0.0.1** · Porta: **20777**
-   - Formato UDP: **2025** · Taxa de envio: **60 Hz**
-3. **No iPhone** (mesma rede Wi-Fi): abra no Safari o endereço que aparece na janela (`http://IP-DO-PC:8888`) e deite o celular.
-   - Compartilhar → **Adicionar à Tela de Início** abre em tela cheia.
-   - Ajustes → Tela e Brilho → Bloqueio Automático → **Nunca**, para a tela não apagar no meio da corrida.
+## Instalar (uma vez)
 
-Toque nos 3 botões do canto de cima para trocar de tela (Corrida, Carro, Info).
+1. Baixe o `.zip` em **Releases** no GitHub e extraia numa pasta fixa (ex.: `Documentos\F1 25 Rafa Pro`).
+   Quem usa o `git`: `git pull` e entre na pasta `versao-60fps`.
+2. Dois cliques em **`Criar atalho.bat`**. Ele compila o `F1 25 Rafa Pro.exe` e cria o ícone **F1 25 Rafa Pro** na área de trabalho.
+3. Abra pelo ícone. Se não tiver o Node.js, o app pergunta e instala sozinho. Depois é só abrir o ícone de novo.
+4. Se o Windows perguntar sobre o firewall, marque **Redes privadas** e clique em Permitir (senão o iPhone não conecta).
 
-Se o iPhone não abrir a página: confira se a rede do Windows está como **Privada** (Configurações → Rede e Internet → propriedades do Wi-Fi/Ethernet).
+## No F1 25 (Configurações → Telemetria)
+
+| | |
+|---|---|
+| Telemetria UDP | Ligada |
+| Broadcast UDP | Desligado |
+| IP | `127.0.0.1` |
+| Porta | `20777` |
+| Taxa de envio | 60 Hz |
+| Formato UDP | 2025 ou 2026 (com o pacote de temporada 2026, use **2026**: só ele manda o overtake e a aero ativa) |
+
+**Feche o SimHub** antes de abrir o app: os dois escutam o jogo na mesma porta.
+
+## No iPhone
+
+Abra no Safari o endereço que aparece no app (ou aponte a câmera para o QR code) e deite o celular.
+- Compartilhar → **Adicionar à Tela de Início** abre em tela cheia.
+- Ajustes → Tela e Brilho → Bloqueio Automático → **Nunca**.
+
+## Trocar de tela pelo volante
+
+Padrão: **R3** (clique do analógico direito). Dá para trocar no app, na aba **Controle**, e testar lá mesmo.
+Para não misturar com funções do jogo, ligue um botão livre a **UDP Action 1** nos controles do F1 25 e escolha "UDP Action 1" no app.
+
+## Arquivos
+
+- `F1 25 Rafa Pro.exe`: abre o app (criado pelo `Compilar exe.bat`).
+- `app/`: o app (servidor, dash, janela de configuração, `config.json` com as suas escolhas).
+- `Iniciar.bat`: abre com a janela preta, para ver erros. No modo normal, erros vão para `app\erro.log`.
+- `teste/simulador.js`: manda dados falsos para testar sem o jogo (`node teste\simulador.js normal 2026`).

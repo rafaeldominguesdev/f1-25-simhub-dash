@@ -1,6 +1,7 @@
 # Instruções: transformar a versão 60 fps num app completo de F1
 
 > Pedido do usuário em 14/11/2026. Leia também o `CLAUDE.md`.
+> **Status:** feito em 14/11/2026 (itens 1 a 5; veja o `CLAUDE.md`). Falta o teste no PC com o jogo e no iPhone.
 > **Tudo em português do Brasil**: conversa, textos do app, comentários e mensagens de commit.
 > O jogo, o controle e o SimHub ficam no **PC Windows**. No Mac não dá para testar com o jogo, então faça um **simulador de pacotes** para testar e deixe o teste de verdade para o usuário no PC.
 
