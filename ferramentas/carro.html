@@ -1,0 +1,137 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<!--
+  Desenho proprio do carro (vista de cima, bico para cima), feito para a dash F1 25 - Rafa Pro.
+  Uso: carro.html?part=<nome>&c=<0..3>   (0 verde, 1 amarelo, 2 laranja, 3 vermelho)
+       carro.html?part=all&c=0           (carro inteiro, para conferir)
+  Cada peca vira um PNG transparente de 360x640, todos no mesmo enquadramento.
+-->
+<style>
+  html, body { margin: 0; background: transparent; }
+  svg { display: block; }
+</style>
+</head>
+<body>
+<svg id="car" xmlns="http://www.w3.org/2000/svg" width="360" height="640" viewBox="0 0 360 640">
+  <defs>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- ===== pecas com dano (recebem a cor) ===== -->
+  <!-- assoalho: borda em volta do corpo inteiro -->
+  <g class="part" data-part="Floor">
+    <path d="M140,176 C104,206 80,262 74,330 C68,420 78,500 98,568 L262,568 C282,500 292,420 286,330 C280,262 256,206 220,176 Z"/>
+  </g>
+
+  <!-- base de baixo (cinza): corpo inteiro, bico com degraus, suspensoes -->
+  <g class="base" data-part="BaseUnder">
+    <path d="M168,24 Q180,12 192,24 L196,122 L214,168 C244,198 264,256 270,328 C276,416 266,494 250,558 L110,558 C94,494 84,416 90,328 C96,256 116,198 146,168 L164,122 Z"/>
+    <path d="M172,40 L188,40 L190,96 L170,96 Z M168,100 L192,100 L196,150 L164,150 Z" class="detail"/>
+    <path d="M110,142 L162,132 L112,178 M110,196 L160,182 M250,142 L198,132 L248,178 M250,196 L200,182" class="line"/>
+    <path d="M104,512 L164,506 L106,548 M256,512 L196,506 L254,548" class="line"/>
+  </g>
+
+  <!-- sidepods: entrada de ar + 2 paineis de cada lado -->
+  <g class="part" data-part="SidepodL">
+    <path d="M150,206 L122,218 L114,256 L148,242 Z"/>
+    <path d="M146,252 L112,266 C100,312 96,384 102,446 C106,486 118,512 134,528 L146,528 Z"/>
+    <path d="M100,300 L94,306 C88,370 90,440 104,500 L110,500 C98,440 96,370 102,306 Z"/>
+  </g>
+  <g class="part" data-part="SidepodR">
+    <path d="M210,206 L238,218 L246,256 L212,242 Z"/>
+    <path d="M214,252 L248,266 C260,312 264,384 258,446 C254,486 242,512 226,528 L214,528 Z"/>
+    <path d="M260,300 L266,306 C272,370 270,440 256,500 L250,500 C262,440 264,370 258,306 Z"/>
+  </g>
+
+  <!-- motor: airbox em octogono + capo em paineis -->
+  <g class="part" data-part="Engine">
+    <path d="M164,334 L196,334 L208,348 L208,384 L196,398 L164,398 L152,384 L152,348 Z"/>
+    <path d="M168,404 L192,404 L196,494 L164,494 Z"/>
+    <path d="M152,404 L162,404 L160,494 L154,494 Z M208,404 L198,404 L200,494 L206,494 Z"/>
+  </g>
+
+  <g class="part" data-part="Gearbox">
+    <path d="M168,500 L192,500 L192,552 L168,552 Z"/>
+  </g>
+
+  <g class="part" data-part="Diffuser">
+    <path d="M114,562 L246,562 L254,582 L106,582 Z"/>
+  </g>
+
+  <!-- asa traseira: plano principal, flap, endplates e pilone -->
+  <g class="part" data-part="RWing">
+    <path d="M100,592 L260,592 L260,614 L100,614 Z"/>
+    <path d="M112,620 L248,620 L248,630 L112,630 Z"/>
+    <path d="M86,580 L98,580 L98,636 L86,636 Z M262,580 L274,580 L274,636 L262,636 Z"/>
+    <path d="M175,584 L185,584 L185,590 L175,590 Z"/>
+  </g>
+
+  <!-- asa dianteira: plano principal + flap + endplate -->
+  <g class="part" data-part="FWingL">
+    <path d="M176,30 C150,32 100,40 48,62 L46,84 C96,70 146,64 176,62 Z"/>
+    <path d="M176,70 C146,72 98,80 48,94 L46,112 C96,100 146,94 176,92 Z"/>
+    <path d="M46,60 L30,64 L30,116 L46,112 Z"/>
+  </g>
+  <g class="part" data-part="FWingR">
+    <path d="M184,30 C210,32 260,40 312,62 L314,84 C264,70 214,64 184,62 Z"/>
+    <path d="M184,70 C214,72 262,80 312,94 L314,112 C264,100 214,94 184,92 Z"/>
+    <path d="M314,60 L330,64 L330,116 L314,112 Z"/>
+  </g>
+
+  <!-- pneus (cor = desgaste) + duto de freio -->
+  <g class="part" data-part="TyreFL"><rect x="40" y="126" width="60" height="100" rx="14"/><rect x="102" y="158" width="10" height="36" rx="3"/></g>
+  <g class="part" data-part="TyreFR"><rect x="260" y="126" width="60" height="100" rx="14"/><rect x="248" y="158" width="10" height="36" rx="3"/></g>
+  <g class="part" data-part="TyreRL"><rect x="32" y="476" width="68" height="108" rx="14"/><rect x="102" y="510" width="10" height="40" rx="3"/></g>
+  <g class="part" data-part="TyreRR"><rect x="260" y="476" width="68" height="108" rx="14"/><rect x="248" y="510" width="10" height="40" rx="3"/></g>
+
+  <!-- base de cima: cockpit e halo (cinza claro) -->
+  <g class="base" data-part="BaseTop">
+    <ellipse cx="180" cy="294" rx="24" ry="32" class="cockpit"/>
+    <path d="M152,266 Q180,240 208,266 M180,244 L180,262" class="line"/>
+  </g>
+</svg>
+
+<script>
+  var q = new URLSearchParams(location.search);
+  var part = q.get('part') || 'all';
+  var cols = ['#2BE04F', '#FFD600', '#FF8C00', '#FF1744'];
+  var lights = ['#8DFF9E', '#FFF27A', '#FFC070', '#FF7A8C'];
+  var ci = parseInt(q.get('c') || '0', 10); if (!(ci >= 0 && ci <= 3)) ci = 0;
+  var col = cols[ci], light = lights[ci];
+
+  document.querySelectorAll('g.part').forEach(function (g) {
+    var isFloor = g.getAttribute('data-part') === 'Floor';
+    var glow = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    glow.setAttribute('filter', 'url(#glow)');
+    Array.prototype.slice.call(g.querySelectorAll('path, rect')).forEach(function (el) {
+      // contorno preto grosso por baixo: separa as pecas umas das outras
+      var gap = el.cloneNode(true);
+      gap.setAttribute('fill', '#050506'); gap.setAttribute('stroke', '#050506');
+      gap.setAttribute('stroke-width', '12'); gap.setAttribute('stroke-linejoin', 'round');
+      g.insertBefore(gap, el);
+      // peca colorida: preenchimento translucido + contorno neon
+      el.setAttribute('fill', col); el.setAttribute('fill-opacity', isFloor ? '0.22' : '0.62');
+      el.setAttribute('stroke', light); el.setAttribute('stroke-width', '4'); el.setAttribute('stroke-linejoin', 'round');
+      glow.appendChild(el);
+    });
+    g.appendChild(glow);
+  });
+  document.querySelectorAll('g.base path, g.base ellipse').forEach(function (el) {
+    var isLine = el.classList.contains('line'), isCock = el.classList.contains('cockpit');
+    el.setAttribute('fill', isLine ? 'none' : (isCock ? '#CFCFD4' : '#141418'));
+    el.setAttribute('stroke', '#8A8A92'); el.setAttribute('stroke-width', isLine ? '6' : '4');
+    el.setAttribute('stroke-linejoin', 'round'); el.setAttribute('stroke-linecap', 'round');
+  });
+  if (part !== 'all') {
+    document.querySelectorAll('g[data-part]').forEach(function (g) {
+      if (g.getAttribute('data-part') !== part) g.style.display = 'none';
+    });
+  }
+</script>
+</body>
+</html>

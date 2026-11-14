@@ -2,6 +2,7 @@
 $ErrorActionPreference = 'Continue'
 $j = [IO.File]::ReadAllText($Djson) | ConvertFrom-Json
 $W = $j.BaseWidth; $H = $j.BaseHeight
+$carDir = Join-Path (Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)) 'carro'
 New-Item -ItemType Directory -Force $OutDir | Out-Null
 
 function css($c) { if (-not $c) { return 'transparent' }; if ($c -notmatch '^#[0-9A-Fa-f]{8}$') { return $c }
@@ -97,6 +98,12 @@ function carDamage($d) {
   $tt = @{ FrontLeft = @(98,'#FF1E9E4A'); FrontRight = @(108,'#FFE07800'); RearLeft = @(92,'#FF1E9E4A'); RearRight = @(76,'#FF1E4FD8') }; foreach ($q in $tt.Keys) { $o["Car_Temp_$q"] = @{ Text = "$($tt[$q][0])"; BackgroundColor = $tt[$q][1] } }
   $br = @(@('FrontLeft','DE',$d.b[0]),@('FrontRight','DD',$d.b[1]),@('RearLeft','TE',$d.b[2]),@('RearRight','TD',$d.b[3]))
   foreach ($b in $br) { $v = $b[2]; $o["Brake_$($b[0])"] = @{ Text = "$($b[1])  $v" + [char]0x00B0; TextColor = $(if ($v -lt 300) { '#FF4FC3F7' } elseif ($v -lt 800) { '#FF00E676' } elseif ($v -lt 1000) { '#FFFF8C00' } else { '#FFFF1744' }) } }
+  function di($v, $l) { if ($v -lt $l[0]) { 0 } elseif ($v -lt $l[1]) { 1 } elseif ($v -lt $l[2]) { 2 } else { 3 } }
+  foreach ($k in @('FWingL','FWingR','RWing','Diffuser','SidepodL','SidepodR','Engine','Gearbox','Floor')) { $o["Car_$k"] = @{ Img = "car_${k}_$(di $parts[$k][1] @(10,30,60))" } }
+  $tmap = @{ TyreFL = 'FrontLeft'; TyreFR = 'FrontRight'; TyreRL = 'RearLeft'; TyreRR = 'RearRight' }
+  foreach ($k in $tmap.Keys) { $o["Car_$k"] = @{ Img = "car_${k}_$(di $tw[$tmap[$k]] @(25,50,70))" } }
+  $o['CarTxt_FWingL'] = @{ Text = "ASA E $($d.fl)%" }; $o['CarTxt_FWingR'] = @{ Text = "ASA D $($d.fr)%" }; $o['CarTxt_RWing'] = @{ Text = "ASA TRAS. $($d.rw)%" }
+  $o['CallVal_Diffuser'] = @{ Text = "$($d.di)%"; TextColor = (dc $d.di) }
   $pr = @(@('FrontLeft','DE','22.6'),@('FrontRight','DD','22.8'),@('RearLeft','TE','20.4'),@('RearRight','TD','20.5'))
   foreach ($p in $pr) { $o["Press_$($p[0])"] = @{ Text = "$($p[1])  $($p[2])" } }
   $o
@@ -104,6 +111,7 @@ function carDamage($d) {
 $statesC = [ordered]@{
   '01_tela1_corrida' = @{ bg = '#FF050506' }
   '15_tela2_carro'   = @{ bg = '#FF050506'; scr = 1; extra = (carDamage @{ fl = 4; fr = 12; rw = 0; di = 2; sp = 0; en = 6; gb = 3; fo = 1; t = @(31,36,24,26); e = @(14,9,11,7,5,12); b = @(612,640,540,552) }) }
+  '19_tela3_info' = @{ bg = '#FF050506'; scr = 2 }
   '16_tela2_carro_danificado' = @{ bg = '#FF050506'; scr = 1
       extra = (carDamage @{ fl = 72; fr = 35; rw = 18; di = 44; sp = 9; en = 22; gb = 6; fo = 61; t = @(58,49,77,41); e = @(38,22,65,30,12,41); b = @(1040,860,410,280) }) }
 }
@@ -122,6 +130,12 @@ foreach ($name in $states.Keys) {
   foreach ($i in $j.Screens[[int]$s.scr].Items) {
     $o = $ov[$i.Name]; if (-not $o) { $o = @{} }
     if ($o.Hidden) { continue }
+    if ($i.'$type' -like '*ImageItem*' -or $i.'$type' -like '*ButtonItem*') {
+      $imgName = $(if ($o.Img) { $o.Img } else { $i.Image })
+      $src = 'file:///' + ((Join-Path $carDir "$imgName.png").Replace('\', '/').Replace(' ', '%20'))
+      [void]$sb.Append("<img src='$src' style='position:absolute;left:$($i.Left)px;top:$($i.Top)px;width:$($i.Width)px;height:$($i.Height)px'>")
+      continue
+    }
     if ($i.Name -like 'Popup*') {
       [void]$sb.Append("<div id='$($i.Name)' style='position:absolute;display:none;box-sizing:border-box;align-items:center;justify-content:center;white-space:nowrap;overflow:hidden;line-height:1;font-family:""Formula1 Display"",sans-serif;font-weight:700'></div>")
       $bnd = @(); foreach ($bp in $i.Bindings.PSObject.Properties) { $bnd += ('"' + $bp.Name + '":' + ($bp.Value.Formula.Expression | ConvertTo-Json)) }

@@ -43,7 +43,21 @@ Baixe o arquivo **[`F1 25 - Rafa Pro.simhubdash`](F1%2025%20-%20Rafa%20Pro.simhu
 - **Temperatura dos freios** e **pressão dos pneus**.
 - Marcha, delta, ERS e posição, para continuar correndo nessa tela.
 
-### Bandeiras e Safety Car (nas duas telas)
+### Tela 3 – Info
+![Tela de info](imagens/19_tela3_info.png)
+
+- **Voltas restantes**, grande, com a volta atual embaixo.
+- **Se parar agora, volta em:** a posição em que você sairia do box se parasse nesta volta, calculada pelo jogo:
+  - verde: você perde no máximo 1 posição;
+  - amarelo: perde até 4;
+  - vermelho: perde mais que isso.
+- **Setores (S1, S2, S3):** os tempos da última volta (verde quando bateu o seu melhor, amarelo quando foi mais lento) e o seu melhor de cada setor (roxo).
+- **Clima:** agora e a previsão para daqui a 5, 15 e 30 minutos, com ícone, condição e **% de chuva**, mais as temperaturas do ar e da pista.
+
+### Menu
+No canto de cima à esquerda tem **3 botões**: **Corrida**, **Carro** e **Info**. É só tocar para trocar de tela. O botão da tela atual fica vermelho.
+
+### Bandeiras e Safety Car (em todas as telas)
 O aviso **surge rápido por cima da dash** e some depois de 4 segundos. A bandeira vermelha fica na tela até acabar.
 - **Bandeira vermelha** e **bandeira amarela** tomam a **tela inteira**. A amarela mostra o setor.
 - **Safety Car, VSC, azul, verde e volta de formação** aparecem num **painel grande** no meio da tela.
@@ -80,8 +94,8 @@ O aviso **surge rápido por cima da dash** e some depois de 4 segundos. A bandei
    - Dica: use Compartilhar → **Adicionar à Tela de Início** para abrir em tela cheia.
 
 ### Trocar de tela
+- **No iPhone (ou em qualquer tela de toque):** toque nos ícones do menu no canto de cima.
 - **No volante:** no SimHub, vá em **Controls and events**, crie um mapeamento com a ação do Dash Studio de **próxima tela** e escolha um botão.
-- **No iPhone:** toque na tela para aparecerem os controles de navegação.
 
 ## Personalizar
 
@@ -92,6 +106,14 @@ powershell -ExecutionPolicy Bypass -File gerar_dash.ps1
 ```
 
 O script instala a dash na pasta do SimHub e gera o `.simhubdash` de novo.
+
+O **desenho do carro** da tela 2 é original e fica em [`ferramentas/carro.html`](ferramentas/carro.html), em SVG, com cada peça separada. Se você mudar o desenho, gere as imagens de novo antes de rodar o `gerar_dash.ps1`:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File ferramentas\gerar_carro.ps1
+```
+
+Esse script cria a pasta [`carro/`](carro) com todas as imagens da dash: cada peça do carro em 4 cores (verde, amarelo, laranja e vermelho), os ícones de clima ([`ferramentas/clima.html`](ferramentas/clima.html)) e os botões do menu ([`ferramentas/menu.html`](ferramentas/menu.html)). A dash troca a imagem de cada peça conforme o dano.
 
 As imagens de prévia são geradas por [`ferramentas/render_preview.ps1`](ferramentas/render_preview.ps1), que usa o Microsoft Edge em modo headless.
 

@@ -108,9 +108,30 @@ if (p >= 99) return (Math.floor(Date.now() / 90) % 2 == 0) ? '#FF4FC3F7' : '#FF1
 return (p / 100 * 15 > IDX) ? 'COL' : '#FF19191E';
 '@
   $js = $js.Replace('IDX', "$i").Replace('COL', $ledColors[$i])
-  Txt -Name "LED_$i" -X (18 + $i * 102) -Y 8 -W 96 -H 34 -Bg '#FF19191E' -Border (Border '#00FFFFFF' 0 6) `
+  Txt -Name "LED_$i" -X (212 + $i * 89) -Y 8 -W 84 -H 34 -Bg '#FF19191E' -Border (Border '#00FFFFFF' 0 6) `
       -Bindings ([ordered]@{ BackgroundColor = (B 'BackgroundColor' (JS $js)) })
 }
+}
+
+# ================= MENU (3 botoes no canto superior esquerdo) =================
+# Toque no icone para ir para a tela: 0 Corrida, 1 Carro/Motor, 2 Info. O da tela atual fica destacado.
+$ScreenIds = @([guid]::NewGuid().ToString(), [guid]::NewGuid().ToString(), [guid]::NewGuid().ToString())
+function Add-Menu([int]$Active) {
+  for ($k = 0; $k -lt 3; $k++) {
+    $img = $(if ($k -eq $Active) { "menu_${k}_on" } else { "menu_$k" })
+    [void]$script:items.Add([ordered]@{
+      '$type' = 'SimHub.Plugins.OutputPlugins.GraphicalDash.Models.ButtonItem, SimHub.Plugins'
+      SimulatedKey = 0; SimulatedKeyV2 = [ordered]@{ KeyCode = 0; Win = $false; Ctrl = $false; Alt = $false; Shift = $false }
+      SimulateKey = $false; TriggerSimHubInputName = ''
+      PressedImage = "menu_${k}_on"; Image = $img; AutoSize = $false; BackgroundColor = '#00FFFFFF'
+      Height = 42; Left = 8 + $k * 64; Top = 4; Visible = $true; Width = 60
+      Behavior = [ordered]@{
+        '$type' = 'SimHub.Plugins.OutputPlugins.GraphicalDash.Behaviors.Buttons.GotoScreenBehavior, SimHub.Plugins'
+        Settings = [ordered]@{ TargetScreen = $ScreenIds[$k] }
+      }
+      Id = [guid]::NewGuid().ToString(); Name = "Menu_$k"; Sid = 0
+    })
+  }
 }
 Add-BgAndLeds
 
@@ -149,23 +170,23 @@ var low = e < 10, ot = m == 3;
 var flash = false;
 var mc = '#FFFFD600';
 '@
-Tile 'ERS' $LX 478 $LW 234 $C.Yellow ([ordered]@{
+Tile 'ERS' $CX 50 $CW 104 $C.Yellow ([ordered]@{
   BackgroundColor           = (B 'BackgroundColor' (JS "$ersMode if (!flash) return '#FF000000'; return low ? '#FFFF1744' : '#FFFF8C00';"))
   'BorderStyle.BorderColor' = (B 'BorderStyle.BorderColor' (JS "$ersMode return '#FFFFD600';"))
 })
-Txt -Name 'ErsPct' -X ($LX + $LW - 200) -Y 484 -W 186 -H 40 -Size 34 -HA 2 -Text '100%' -Bindings ([ordered]@{
+Txt -Name 'ErsPct' -X ($CX + $CW - 200) -Y 52 -W 186 -H 36 -Size 32 -HA 2 -Text '100%' -Bindings ([ordered]@{
   Text      = (B 'Text' (NC "format(round(isnull([{R}PlayerCarStatusData.m_ersStoreEnergy],0) / 4000000 * 100, 0), '0') + '%'"))
   TextColor = (B 'TextColor' (JS "$ersMode return flash ? '#FF000000' : (low ? '#FFFF1744' : '#FFFFFFFF');"))
 })
-Gauge -Name 'ErsBar' -X ($LX + 14) -Y 532 -W ($LW - 28) -H 64 -Bindings ([ordered]@{
+Gauge -Name 'ErsBar' -X ($CX + 14) -Y 92 -W ($CW - 28) -H 30 -Bindings ([ordered]@{
   Value      = (B 'Value' (NC "isnull([{R}PlayerCarStatusData.m_ersStoreEnergy],0) / 4000000 * 100"))
   GaugeColor = (B 'GaugeColor' (JS "$ersMode return '#FFFFD600';"))
 })
-Txt -Name 'ErsMode' -X ($LX + 14) -Y 608 -W ($LW - 28) -H 44 -Size 30 -HA 0 -Text 'MEDIO' -Bindings ([ordered]@{
+Txt -Name 'ErsMode' -X ($CX + 70) -Y 54 -W 330 -H 32 -Size 22 -HA 0 -Text 'MEDIO' -Bindings ([ordered]@{
   Text      = (B 'Text' (JS "$ersMode if (low) return 'BATERIA BAIXA'; return m == 3 ? 'ULTRAPASSAGEM' : m == 2 ? 'HOTLAP' : m == 1 ? 'MEDIO' : 'NENHUM';"))
   TextColor = (B 'TextColor' (JS "$ersMode if (flash) return '#FF000000'; return low ? '#FFFF1744' : mc;"))
 })
-Txt -Name 'ErsUsed' -X ($LX + 14) -Y 660 -W ($LW - 28) -H 36 -Size 20 -HA 0 -Color $C.Label -Text 'USADO NA VOLTA 0%' -Bindings ([ordered]@{
+Txt -Name 'ErsUsed' -X ($CX + 14) -Y 124 -W ($CW - 28) -H 26 -Size 16 -HA 0 -Color $C.Label -Text 'USADO NA VOLTA 0%' -Bindings ([ordered]@{
   Text      = (B 'Text' (NC "'USADO NA VOLTA ' + format(round(isnull([{R}PlayerCarStatusData.m_ersDeployedThisLap],0) / 4000000 * 100, 0), '0') + '%'"))
   TextColor = (B 'TextColor' (JS "$ersMode return flash ? '#FF000000' : '#FF8E8E96';"))
 })
@@ -179,7 +200,7 @@ var fault = $prop('{R}PlayerCarDamageData.m_drsFault') == 1;
 var dist = $prop('{R}PlayerCarStatusData.m_drsActivationDistance') || 0;
 var fast = Math.floor(Date.now() / 110) % 2 == 0;
 '@
-Txt -Name 'DRS' -X $CX -Y 50 -W 360 -H 104 -Size 44 -Text 'DRS' -Bg $C.Tile -Border (Border '#FF2A2A30') -Bindings ([ordered]@{
+Txt -Name 'DRS' -X $LX -Y 478 -W $LW -H 113 -Size 44 -Text 'DRS' -Bg $C.Tile -Border (Border '#FF2A2A30') -Bindings ([ordered]@{
   Text            = (B 'Text' (JS "$drsJs if (fault) return 'DRS FALHA'; if (open) return 'DRS ABERTO'; return 'DRS';"))
   BackgroundColor = (B 'BackgroundColor' (JS "$drsJs if (fault) return '#FF4A0000'; if (open) return '#FF00E676'; return '#FF000000';"))
   TextColor       = (B 'TextColor' (JS "$drsJs if (fault) return '#FFFF3B30'; if (open) return '#FF000000'; return '#FF3A3A42';"))
@@ -201,13 +222,13 @@ var laneT = ($prop('{R}PlayerLapData.m_pitLaneTimeInLaneInMS') || 0) / 1000;
 var stopT = ($prop('{R}PlayerLapData.m_pitStopTimerInMS') || 0) / 1000;
 var noLim = lane && !lim && ps != 2;
 '@
-Txt -Name 'BOX' -X ($CX + 368) -Y 50 -W 360 -H 104 -Size 36 -Text 'BOX' -Bg $C.Tile -Border (Border '#FF2A2A30') -Bindings ([ordered]@{
+Txt -Name 'BOX' -X $LX -Y 599 -W $LW -H 113 -Size 38 -Text 'BOX' -Bg $C.Tile -Border (Border '#FF2A2A30') -Bindings ([ordered]@{
   Text            = (B 'Text' (JS "$pitJs if (ps == 2) return 'PARADO'; if (noLim) return 'LIMITADOR!'; if (ps == 1 && laneT < 4) return 'ENTRADA BOX'; if (lim) return 'LIMITADOR'; if (lane) return 'PIT LANE'; if (inWin) return 'BOX BOX'; return 'BOX';"))
   BackgroundColor = (B 'BackgroundColor' (JS "$pitJs if (ps == 2) return '#FF2979FF'; if (noLim) return blink ? '#FFFF1744' : '#FF3A0000'; if (ps == 1 && laneT < 4) return blink ? '#FF2979FF' : '#FFFFFFFF'; if (lim) return blink ? '#FF2979FF' : '#FF0D2A66'; if (lane) return '#FF0D2A66'; if (inWin) return blink ? '#FF00838F' : '#FF003C42'; return '#FF000000';"))
   TextColor       = (B 'TextColor' (JS "$pitJs if (ps == 1 && laneT < 4 && !noLim) return blink ? '#FFFFFFFF' : '#FF0D2A66'; return (lim || lane || inWin || ps > 0) ? '#FFFFFFFF' : '#FF3A3A42';"))
   'BorderStyle.BorderColor' = (B 'BorderStyle.BorderColor' (JS "$pitJs if (noLim) return '#FFFF1744'; if (inWin) return '#FF00E5FF'; return (lim || lane || ps > 0) ? '#FF2979FF' : '#FF2A2A30';"))
 })
-Txt -Name 'PitWindow' -X ($CX + 368) -Y 120 -W 360 -H 30 -Size 16 -Color $C.Label -Weight 'Normal' -Text 'JANELA --  PARADAS 0' -Bindings ([ordered]@{
+Txt -Name 'PitWindow' -X $LX -Y 674 -W $LW -H 30 -Size 16 -Color $C.Label -Weight 'Normal' -Text 'JANELA --  PARADAS 0' -Bindings ([ordered]@{
   Text = (B 'Text' (JS "$pitJs if (ps == 2) return 'PARADA ' + stopT.toFixed(1) + 's'; if (lane || ps > 0) return 'NO PIT ' + laneT.toFixed(1) + 's'; return (ideal > 0 ? 'JANELA V' + ideal + '-' + latest : 'JANELA --') + '   PARADAS ' + stops;"))
   TextColor = (B 'TextColor' (JS "$pitJs return (lane || ps > 0) ? '#FFFFFFFF' : '#FF8E8E96';"))
 })
@@ -411,6 +432,7 @@ for ($i = 0; $i -lt $dmg.Count; $i++) {
   })
 }
 
+Add-Menu 0
 Add-Popup
 $screen1Items = $script:items.ToArray()
 
@@ -495,48 +517,68 @@ Gauge -Name 'ErsBar2' -X ($L2X + 14) -Y 516 -W ($L2W - 28) -H 54 -Color '#FFFFD6
 Tile 'POSICAO / VOLTA' $L2X 594 $L2W 118 $C.Red
 Txt -Name 'PosLap2' -X $L2X -Y 622 -W $L2W -H 84 -Size 40 -Text 'P1   1/57' -Bindings ([ordered]@{ Text = (B 'Text' (NC "'P' + format(isnull([{N}Position],0),'0') + '   ' + format(isnull([{N}CurrentLap],0),'0') + '/' + format(isnull([{N}TotalLaps],0),'0')")) })
 
-# ---- centro: menu do carro (vista de cima, bico para cima) ----
+# ---- centro: menu do carro (desenho proprio em camadas de imagem, pasta carro\) ----
+# Cada peca tem 4 imagens (_0 verde, _1 amarelo, _2 laranja, _3 vermelho) e o SimHub escolhe pela formula.
+function ImgItem([string]$Name, [double]$X, [double]$Y, [double]$Wd, [double]$Hh, [string]$Image, $Bindings = $null) {
+  $o = [ordered]@{
+    '$type' = 'SimHub.Plugins.OutputPlugins.GraphicalDash.Models.ImageItem, SimHub.Plugins'
+    Image = $Image; AutoSize = $false; BackgroundColor = '#00FFFFFF'
+    Height = $Hh; Left = $X; Top = $Y; Visible = $true; Width = $Wd
+    Id = [guid]::NewGuid().ToString(); Name = $Name; Sid = 0
+  }
+  if ($Bindings) { $o.Bindings = $Bindings }
+  [void]$script:items.Add($o)
+}
+function CarLayer([string]$Part, [string]$Prop, [int[]]$Lim) {
+  $img = "if(isnull($Prop,0) < $($Lim[0]), 'car_${Part}_0', if(isnull($Prop,0) < $($Lim[1]), 'car_${Part}_1', if(isnull($Prop,0) < $($Lim[2]), 'car_${Part}_2', 'car_${Part}_3')))"
+  ImgItem "Car_$Part" $carL $carT 360 640 "car_${Part}_0" ([ordered]@{ Image = (B 'Image' (NC $img)) })
+}
+function DmgText([string]$Name, [double]$X, [double]$Y, [double]$Wd, [double]$Hh, [string]$Field, [string]$Label, [double]$Size = 16) {
+  $p = "[{R}PlayerCarDamageData.$Field]"
+  Txt -Name "CarTxt_$Name" -X $X -Y $Y -W $Wd -H $Hh -Size $Size -Text "$Label 0%" -Bindings ([ordered]@{ Text = (B 'Text' (NC "'$Label ' + format(isnull($p,0),'0') + '%'")) })
+}
+
 $CarX = 346; $CarW = 868
 Tile 'CARRO' $CarX 50 $CarW 662 '#FF2A2A30'
 $cx = $CarX + $CarW / 2
-# assoalho por baixo de tudo
-DmgPart 'Floor' ($cx - 112) 300 224 310 'm_floorDamage' 56 '-'
-# suspensoes
-foreach ($sy in @(186, 226)) { Shape "SuspFL_$sy" ($cx - 84) $sy 68 5 2 '#FF8A8A92' '#FF8A8A92' 0; Shape "SuspFR_$sy" ($cx + 16) $sy 68 5 2 '#FF8A8A92' '#FF8A8A92' 0 }
-foreach ($sy in @(575, 605)) { Shape "SuspRL_$sy" ($cx - 88) $sy 70 5 2 '#FF8A8A92' '#FF8A8A92' 0; Shape "SuspRR_$sy" ($cx + 18) $sy 70 5 2 '#FF8A8A92' '#FF8A8A92' 0 }
-# bico, monocoque, sidepods, cockpit, motor, cambio
-Shape 'Nose' ($cx - 16) 84 32 230 16
-Shape 'Mono' ($cx - 40) 290 80 180 30
-DmgPart 'SidepodL' ($cx - 106) 330 60 180 'm_sidepodDamage' 26 '' 15
-DmgPart 'SidepodR' ($cx + 46) 330 60 180 'm_sidepodDamage' 26 '' 15
-Shape 'Cockpit' ($cx - 26) 318 52 74 26 '#FFD0D0D4' '#FF8A8A92'
-DmgPart 'Engine' ($cx - 42) 440 84 108 'm_engineDamage' 22 '' 18
-DmgPart 'Gearbox' ($cx - 18) 548 36 64 'm_gearBoxDamage' 8 '-'
-# asas
-DmgPart 'FWingL' ($cx - 152) 74 144 58 'm_frontLeftWingDamage' 20 'ASA E' 16
-DmgPart 'FWingR' ($cx + 8) 74 144 58 'm_frontRightWingDamage' 20 'ASA D' 16
-DmgPart 'Diffuser' ($cx - 80) 618 160 26 'm_diffuserDamage' 6 'DIFUSOR' 13
-DmgPart 'RWing' ($cx - 84) 650 168 50 'm_rearWingDamage' 10 'ASA TRAS.' 15
-# pneus (cor = desgaste)
-CarTyre 'FrontLeft'  ($cx - 152) 150 68 112
-CarTyre 'FrontRight' ($cx + 84)  150 68 112
-CarTyre 'RearLeft'   ($cx - 162) 535 74 112
-CarTyre 'RearRight'  ($cx + 88)  535 74 112
+$carL = $cx - 180; $carT = 66
+$dmgLim = @(10, 30, 60); $wearLim = @(25, 50, 70)
+# ordem das camadas (de baixo para cima)
+CarLayer 'Floor' '[{R}PlayerCarDamageData.m_floorDamage]' $dmgLim
+ImgItem 'Car_BaseUnder' $carL $carT 360 640 'car_BaseUnder'
+CarLayer 'SidepodL' '[{R}PlayerCarDamageData.m_sidepodDamage]' $dmgLim
+CarLayer 'SidepodR' '[{R}PlayerCarDamageData.m_sidepodDamage]' $dmgLim
+CarLayer 'Engine'   '[{R}PlayerCarDamageData.m_engineDamage]' $dmgLim
+CarLayer 'Gearbox'  '[{R}PlayerCarDamageData.m_gearBoxDamage]' $dmgLim
+CarLayer 'Diffuser' '[{R}PlayerCarDamageData.m_diffuserDamage]' $dmgLim
+CarLayer 'RWing'    '[{R}PlayerCarDamageData.m_rearWingDamage]' $dmgLim
+CarLayer 'FWingL'   '[{R}PlayerCarDamageData.m_frontLeftWingDamage]' $dmgLim
+CarLayer 'FWingR'   '[{R}PlayerCarDamageData.m_frontRightWingDamage]' $dmgLim
+CarLayer 'TyreFL'   '[{N}TyreWearFrontLeft]' $wearLim
+CarLayer 'TyreFR'   '[{N}TyreWearFrontRight]' $wearLim
+CarLayer 'TyreRL'   '[{N}TyreWearRearLeft]' $wearLim
+CarLayer 'TyreRR'   '[{N}TyreWearRearRight]' $wearLim
+ImgItem 'Car_BaseTop' $carL $carT 360 640 'car_BaseTop'
+# % em cima das asas
+DmgText 'FWingL' ($carL + 26) ($carT + 40) 150 40 'm_frontLeftWingDamage' 'ASA E' 16
+DmgText 'FWingR' ($carL + 184) ($carT + 40) 150 40 'm_frontRightWingDamage' 'ASA D' 16
+DmgText 'RWing'  ($carL + 98) ($carT + 592) 164 32 'm_rearWingDamage' 'ASA TRAS.' 14
 # temperatura embaixo de cada pneu
-TempBox 'FrontLeft'  ($cx - 156) 268
-TempBox 'FrontRight' ($cx + 80)  268
-TempBox 'RearLeft'   ($cx - 163) 652
-TempBox 'RearRight'  ($cx + 87)  652
+TempBox 'FrontLeft'  ($carL + 31)  ($carT + 228)
+TempBox 'FrontRight' ($carL + 253) ($carT + 228)
+TempBox 'RearLeft'   ($carL - 10)  ($carT + 586)
+TempBox 'RearRight'  ($carL + 294) ($carT + 586)
 # aneis de desgaste com linha pontilhada
-WearRing 'FrontLeft'  ($cx - 290) 206 ($cx - 222) 66
-WearRing 'FrontRight' ($cx + 290) 206 ($cx + 156) 66
-WearRing 'RearLeft'   ($cx - 290) 591 ($cx - 222) 58
-WearRing 'RearRight'  ($cx + 290) 591 ($cx + 164) 58
+WearRing 'FrontLeft'  ($cx - 290) ($carT + 170) ($cx - 222) 76
+WearRing 'FrontRight' ($cx + 290) ($carT + 170) ($carL + 326) 76
+WearRing 'RearLeft'   ($cx - 290) ($carT + 526) ($cx - 222) 68
+WearRing 'RearRight'  ($cx + 290) ($carT + 526) ($carL + 334) 68
 # valores laterais
-Callout 'Sidepod' ($CarX + 16) 330 'SIDEPOD' 'm_sidepodDamage'
-Callout 'Motor'   ($CarX + 16) 410 'MOTOR' 'm_engineDamage'
-Callout 'Floor'   ($CarX + $CarW - 166) 330 'ASSOALHO' 'm_floorDamage' 2
-Callout 'Gearbox' ($CarX + $CarW - 166) 410 'CAMBIO' 'm_gearBoxDamage' 2
+Callout 'Sidepod'  ($CarX + 16) 330 'SIDEPOD' 'm_sidepodDamage'
+Callout 'Motor'    ($CarX + 16) 410 'MOTOR' 'm_engineDamage'
+Callout 'Floor'    ($CarX + $CarW - 166) 330 'ASSOALHO' 'm_floorDamage' 2
+Callout 'Gearbox'  ($CarX + $CarW - 166) 410 'CAMBIO' 'm_gearBoxDamage' 2
+Callout 'Diffuser' ($CarX + $CarW - 166) 490 'DIFUSOR' 'm_diffuserDamage' 2
 
 # ---- coluna direita: motor, freios, pressao (mais estreita) ----
 $PX = 1222; $PW = 330
@@ -573,8 +615,110 @@ foreach ($wh in $wheels) {
     Text = (B 'Text' (NC "'$($wh[1]) ' + format(isnull($p,0),'0.0')"))
   })
 }
+Add-Menu 1
 Add-Popup
 $screen2Items = $script:items.ToArray()
+
+# =====================================================================
+# ================= TELA 3: INFO (estrategia, setores, clima) =========
+# =====================================================================
+$script:items = New-Object System.Collections.ArrayList
+Add-BgAndLeds
+
+# ---- voltas restantes ----
+Tile 'VOLTAS RESTANTES' 8 50 380 250 $C.White
+Txt -Name 'LapsLeft' -X 8 -Y 80 -W 380 -H 160 -Size 130 -Text '35' -Bindings ([ordered]@{
+  Text = (B 'Text' (JS "var t = `$prop('{N}TotalLaps') || 0, c = `$prop('{N}CurrentLap') || 0; return '' + Math.max(0, t - c + 1);"))
+})
+Txt -Name 'LapsLeftSub' -X 8 -Y 244 -W 380 -H 40 -Size 24 -Color $C.Label -Text 'VOLTA 23/57' -Bindings ([ordered]@{
+  Text = (B 'Text' (NC "'VOLTA ' + format(isnull([{N}CurrentLap],0),'0') + '/' + format(isnull([{N}TotalLaps],0),'0')"))
+})
+
+# ---- se parar agora, volta em ----
+$rejJs = @'
+var r = $prop('{R}PacketSessionData.m_pitStopRejoinPosition') || 0;
+var pos = $prop('{N}Position') || 0;
+'@
+Tile 'SE PARAR AGORA, VOLTA EM' 396 50 380 250 $C.Cyan
+Txt -Name 'Rejoin' -X 396 -Y 80 -W 380 -H 160 -Size 130 -Text 'P8' -Color '#FFFFD600' -Bindings ([ordered]@{
+  Text      = (B 'Text' (JS "$rejJs return r > 0 ? 'P' + r : '--';"))
+  TextColor = (B 'TextColor' (JS "$rejJs if (r <= 0) return '#FF8E8E96'; if (r <= pos + 1) return '#FF00E676'; if (r <= pos + 4) return '#FFFFD600'; return '#FFFF5A4D';"))
+})
+Txt -Name 'RejoinSub' -X 396 -Y 244 -W 380 -H 40 -Size 24 -Color $C.Label -Text 'VOCE ESTA EM P4' -Bindings ([ordered]@{
+  Text = (B 'Text' (NC "'VOCE ESTA EM P' + format(isnull([{N}Position],0),'0')"))
+})
+
+# ---- setores: ultima volta (verde = seu melhor, amarelo = mais lento) e melhor ----
+$secFns = @'
+function sec(v) { if (v == null) return null; if (typeof v == 'number') return v; if (v.TotalSeconds !== undefined) return v.TotalSeconds;
+  var s = String(v); var p = s.split(':'); if (p.length == 3) return (+p[0]) * 3600 + (+p[1]) * 60 + parseFloat(p[2]);
+  if (p.length == 2) return (+p[0]) * 60 + parseFloat(p[1]); var f = parseFloat(s); return isNaN(f) ? null : f; }
+function fmt(x) { if (x == null || !(x > 0)) return '--.---'; if (x < 60) return x.toFixed(3);
+  var m = Math.floor(x / 60); var r = x - m * 60; return m + ':' + (r < 10 ? '0' : '') + r.toFixed(3); }
+'@
+Tile 'SETORES' 784 50 768 250 $C.Purple
+Txt -Name 'SecRowLast' -X 798 -Y 120 -W 130 -H 76 -Size 20 -HA 0 -Color $C.Label -Text 'ULTIMA'
+Txt -Name 'SecRowBest' -X 798 -Y 206 -W 130 -H 76 -Size 20 -HA 0 -Color $C.Label -Text 'MELHOR'
+for ($k = 1; $k -le 3; $k++) {
+  $sx = 936 + ($k - 1) * 204
+  $vals = "$secFns var last = sec(`$prop('{N}Sector${k}LastLapTime')); var best = sec(`$prop('{N}Sector${k}BestTime'));"
+  Txt -Name "SecHead_$k" -X $sx -Y 84 -W 196 -H 30 -Size 22 -Color '#FFCFCFD6' -Text "S$k"
+  Txt -Name "SecLast_$k" -X $sx -Y 120 -W 196 -H 76 -Size 36 -Text '28.412' -Color '#FF00E676' -Bg '#FF101014' -Border (Border '#FF2A2A30' 2 10) -Bindings ([ordered]@{
+    Text      = (B 'Text' (JS "$vals return fmt(last);"))
+    TextColor = (B 'TextColor' (JS "$vals if (!(last > 0)) return '#FF8E8E96'; return (best > 0 && last <= best + 0.0005) ? '#FF00E676' : '#FFFFD600';"))
+  })
+  Txt -Name "SecBest_$k" -X $sx -Y 206 -W 196 -H 76 -Size 36 -Text '28.105' -Color $C.Purple -Bg '#FF101014' -Border (Border '#FF2A2A30' 2 10) -Bindings ([ordered]@{
+    Text = (B 'Text' (JS "$vals return fmt(best);"))
+  })
+}
+
+# ---- clima: agora + previsao 5 / 15 / 30 min ----
+$wxJs = @'
+var arr = $prop('{R}PacketSessionData.m_weatherForecastSamples');
+var n = $prop('{R}PacketSessionData.m_numWeatherForecastSamples') || 0;
+var st = $prop('{R}PacketSessionData.m_sessionType');
+function fc(min) { if (arr == null) return null; for (var i = 0; i < n; i++) { var s = arr[i]; if (s == null) continue;
+  if ((st == null || s.m_sessionType == st) && s.m_timeOffset == min) return s; } return null; }
+var names = ['LIMPO', 'POUCAS NUVENS', 'NUBLADO', 'CHUVA FRACA', 'CHUVA FORTE', 'TEMPESTADE'];
+var s = fc(OFFSET);
+var w = (OFFSET == 0 && $prop('{R}PacketSessionData.m_weather') != null) ? $prop('{R}PacketSessionData.m_weather') : (s ? s.m_weather : null);
+var rain = s ? s.m_rainPercentage : null;
+'@
+Tile 'CLIMA' 8 308 1544 404 $C.Cyan
+Txt -Name 'WxTemps' -X 1000 -Y 312 -W 538 -H 30 -Size 20 -HA 2 -Color '#FFCFCFD6' -Text "AR 24$DEG   PISTA 38$DEG" -Bindings ([ordered]@{
+  Text = (B 'Text' (NC "'AR ' + format(isnull([{R}PacketSessionData.m_airTemperature],0),'0') + '$DEG   PISTA ' + format(isnull([{R}PacketSessionData.m_trackTemperature],0),'0') + '$DEG'"))
+})
+$cards = @(@(0, 'AGORA', 1, 10), @(5, '5 MIN', 1, 10), @(15, '15 MIN', 2, 30), @(30, '30 MIN', 3, 60))
+for ($k = 0; $k -lt 4; $k++) {
+  $off = $cards[$k][0]; $cx3 = 24 + $k * 382
+  $js = $wxJs.Replace('OFFSET', "$off")
+  Txt -Name "WxCard_$k" -X $cx3 -Y 350 -W 366 -H 346 -Bg '#FF101014' -Border (Border '#FF2A2A30' 2 16)
+  Txt -Name "WxWhen_$k" -X $cx3 -Y 360 -W 366 -H 44 -Size 32 -Text $cards[$k][1]
+  ImgItem "WxIcon_$k" ($cx3 + 108) 408 150 150 "wx_$($cards[$k][2])" ([ordered]@{ Image = (B 'Image' (JS "$js return 'wx_' + (w == null ? 0 : w);")) })
+  Txt -Name "WxName_$k" -X $cx3 -Y 566 -W 366 -H 40 -Size 26 -Color '#FFCFCFD6' -Text @('POUCAS NUVENS','POUCAS NUVENS','NUBLADO','CHUVA FRACA')[$k] -Bindings ([ordered]@{
+    Text = (B 'Text' (JS "$js return w == null ? '--' : names[w];"))
+  })
+  Txt -Name "WxRain_$k" -X $cx3 -Y 614 -W 366 -H 60 -Size 40 -Color '#FF4FA8FF' -Text "CHUVA $($cards[$k][3])%" -Bindings ([ordered]@{
+    Text      = (B 'Text' (JS "$js return rain == null ? 'CHUVA --' : 'CHUVA ' + rain + '%';"))
+    TextColor = (B 'TextColor' (JS "$js if (rain == null) return '#FF8E8E96'; return rain >= 50 ? '#FF2F8BFF' : (rain >= 20 ? '#FF4FA8FF' : '#FFCFCFD6');"))
+  })
+}
+Add-Menu 2
+Add-Popup
+$screen3Items = $script:items.ToArray()
+
+# ================= IMAGENS (pasta carro\: carro, clima e menu; geradas por ferramentas\gerar_carro.ps1) =================
+$Root = Split-Path -Parent $MyInvocation.MyCommand.Path
+$carPngs = Get-ChildItem (Join-Path $Root 'carro') -Filter '*.png' | Sort-Object Name
+if ($carPngs.Count -eq 0) { throw 'Faltam as imagens. Rode antes: ferramentas\gerar_carro.ps1' }
+$md5 = [Security.Cryptography.MD5]::Create()
+Add-Type -AssemblyName System.Drawing
+$carImages = @(foreach ($f in $carPngs) {
+  $bytes = [IO.File]::ReadAllBytes($f.FullName)
+  $bm = [Drawing.Image]::FromFile($f.FullName); $iw = $bm.Width; $ih = $bm.Height; $bm.Dispose()
+  [ordered]@{ Name = $f.BaseName; Extension = '.png'; Modified = $false; Optimized = $false; Width = $iw; Height = $ih
+              Length = $bytes.Length; MD5 = (($md5.ComputeHash($bytes) | ForEach-Object { $_.ToString('x2') }) -join '') }
+})
 
 # ================= MONTA O ARQUIVO =================
 $screenId = [guid]::NewGuid().ToString()
@@ -582,20 +726,25 @@ $dash = [ordered]@{
   Version = 2; Id = [guid]::NewGuid().ToString(); BaseHeight = $H; BaseWidth = $W; BackgroundColor = '#FF000000'
   Screens = @(
     [ordered]@{
-      Name = 'Corrida'; InGameScreen = $true; IdleScreen = $true; PitScreen = $false; ScreenId = $screenId
+      Name = 'Corrida'; InGameScreen = $true; IdleScreen = $true; PitScreen = $false; ScreenId = $ScreenIds[0]
       IsForegroundLayer = $false; IsBackgroundLayer = $false; BackgroundColor = '#FF000000'
       Items = $screen1Items; Id = [guid]::NewGuid().ToString(); Sid = 0
     },
     [ordered]@{
-      Name = 'Carro'; InGameScreen = $true; IdleScreen = $false; PitScreen = $false; ScreenId = [guid]::NewGuid().ToString()
+      Name = 'Carro'; InGameScreen = $true; IdleScreen = $false; PitScreen = $false; ScreenId = $ScreenIds[1]
       IsForegroundLayer = $false; IsBackgroundLayer = $false; BackgroundColor = '#FF000000'
       Items = $screen2Items; Id = [guid]::NewGuid().ToString(); Sid = 0
+    },
+    [ordered]@{
+      Name = 'Info'; InGameScreen = $true; IdleScreen = $false; PitScreen = $false; ScreenId = $ScreenIds[2]
+      IsForegroundLayer = $false; IsBackgroundLayer = $false; BackgroundColor = '#FF000000'
+      Items = $screen3Items; Id = [guid]::NewGuid().ToString(); Sid = 0
     })
   SnapToGrid = $false; HideLabels = $false; ShowForeground = $true; ForegroundOpacity = 100.0
   ShowBackground = $true; BackgroundOpacity = 100.0; ShowBoundingRectangles = $false; GridSize = 10
-  Images = @()
+  Images = $carImages
   Metadata = [ordered]@{
-    ScreenCount = 2.0; InGameScreensIndexs = @(0, 1); IdleScreensIndexs = @(0); MainPreviewIndex = 0
+    ScreenCount = 3.0; InGameScreensIndexs = @(0, 1, 2); IdleScreensIndexs = @(0); MainPreviewIndex = 0
     IsOverlay = $false; ShowInTaskBar = $true; Width = [double]$W; Height = [double]$H; OverlaySizeWarning = $false
     MetadataVersion = 2.0; EnableOnDashboardMessaging = $true; PitScreensIndexs = @()
     Title = $DashName; Author = 'Rafa'; Description = 'Dashboard F1 25: delta, DRS, ERS, pneus, danos, safety car'
@@ -609,6 +758,13 @@ $utf8 = New-Object System.Text.UTF8Encoding($false)
 New-Item -ItemType Directory -Force $OutDir | Out-Null
 [IO.File]::WriteAllText((Join-Path $OutDir "$DashName.djson"), $json, $utf8)
 [IO.File]::WriteAllText((Join-Path $OutDir "$DashName.djson.metadata"), ($dash.Metadata | ConvertTo-Json -Depth 5), $utf8)
+# imagens embutidas: <dash>.djson.ressources = zip com os PNGs
+Add-Type -AssemblyName System.IO.Compression, System.IO.Compression.FileSystem
+$res = Join-Path $OutDir "$DashName.djson.ressources"
+if (Test-Path $res) { Remove-Item $res -Force }
+$zipRes = [IO.Compression.ZipFile]::Open($res, 'Create')
+foreach ($f in $carPngs) { [void][IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zipRes, $f.FullName, $f.Name) }
+$zipRes.Dispose()
 
 # Copia local + pacote .simhubdash (para compartilhar / GitHub)
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -623,6 +779,6 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem
 [IO.Compression.ZipFile]::CreateFromDirectory($pkgRoot, $zip)
 Remove-Item $pkgRoot -Recurse -Force
 
-"OK: tela 1 = $($screen1Items.Count) elementos, tela 2 = $($screen2Items.Count) elementos"
+"OK: tela 1 = $($screen1Items.Count), tela 2 = $($screen2Items.Count), tela 3 = $($screen3Items.Count) elementos; $($carPngs.Count) imagens"
 "Instalado em: $OutDir"
 "Pacote: $zip"
